@@ -10,16 +10,19 @@ from typing import Any
 
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "printer_jobs.db"
 INDEX_PATH = BASE_DIR / "index.html"
 MOBILE_PATH = BASE_DIR / "mobile.html"
+ASSETS_PATH = BASE_DIR / "assets"
 PAGE_SIZE = 10
 PC_5800X_AGENT_URL = "http://100.117.206.9:8898/status"
 MAC_MINI_AGENT_URL = "http://100.116.128.62:8898/status"
 
 app = FastAPI(title="i-Print Dashboard")
+app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="assets")
 
 
 def get_connection() -> sqlite3.Connection:
