@@ -136,7 +136,8 @@ const devices=[
 ];
 let jobPage=1;
 let jobQuery='';
-let viewMode=localStorage.getItem('iprintViewMode')||'list';
+const storedViewMode=localStorage.getItem('iprintViewMode');
+let viewMode=['list','card','theme'].includes(storedViewMode)?storedViewMode:'list';
 function card(d,index){const pcTone=d.pcStatus==='Online'?'ok':'bad';const tsTone=d.tailscaleStatus==='Online'?'ok':'bad';const printerStatus=d.error>0?'Error':d.printing>0?'Printing':d.waiting>0?'Queue':'Idle';const printerTone=d.error>0?'bad':d.printing>0?'ok':d.waiting>0?'warn':'ok';return `<article class="card" data-name="${d.name.toLowerCase()} ${d.printer.toLowerCase()}"><div class="head"><div style="width:100%"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div class="name">${d.name}</div><div class="sub" style="white-space:nowrap">${d.address}</div></div><div class="sub">${d.os}</div></div></div><div class="status-grid"><div class="status-box"><small>PC 상태</small><span class="status-value ${pcTone}">${koreanPcStatus(d.pcStatus)}</span></div><div class="status-box"><small>Tailscale 상태</small><span class="status-value ${tsTone}">${koreanPcStatus(d.tailscaleStatus)}</span></div></div><div class="metrics">${metric('CPU',d.cpu,'%')}${metric('온도',d.temp,'℃')}${metric('메모리',d.ram,'%')}${metric('디스크',d.disk,'%')}</div><div class="printer"><div class="printer-top"><div><strong>${koreanPrinterName(d.printer)}</strong><div class="sub">인쇄 서비스: ${koreanSpooler(d.spooler)}</div><div class="sub">프린터 상태: <span class="${printerTone}">${koreanPrinterState(printerStatus)}</span></div><div class="sub">최근 상태: ${koreanLastAction(d.lastAction)}</div></div><button class="icon-btn" onclick="resetQueue(${index})" title="대기열 초기화" aria-label="대기열 초기화"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M18.5 9A7 7 0 0 0 6.3 6.3L4 8.6"/><path d="M5.5 15A7 7 0 0 0 17.7 17.7L20 15.4"/></svg></button></div><div class="jobs"><div class="job"><b>${d.printing}</b><span>출력 중</span></div><div class="job"><b>${d.waiting}</b><span>대기</span></div><div class="job"><b>${d.error}</b><span>오류</span></div><div class="job"><b>${d.printing+d.waiting+d.error}</b><span>전체</span></div></div></div></article>`}
 function metric(label,v,unit){const available=v!==null&&v!==undefined;const numeric=available?Number(v):0;const rounded=available?Math.round(numeric):null;const value=available?`${rounded}${unit}`:'N/A';const width=available?Math.min(Math.max(numeric,0),100):0;const bar=label==='CPU'?`<div class="bar"><div class="fill" style="width:${width}%"></div></div>`:'';return `<div class="metric"><small>${label}</small><strong>${value}</strong>${bar}</div>`}
 function printerState(d){return d.error>0?'Error':d.printing>0?'Printing':d.waiting>0?'Queued':d.spooler==='Running'?'Idle':'Unknown'}
@@ -148,10 +149,31 @@ function koreanPrinterState(state){return state==='Printing'?'출력 중':state=
 function koreanLastAction(text){if(!text)return'준비됨';return text.replace(/^Live · /,'실시간 · ').replace('Agent Unreachable','에이전트 연결 안 됨').replace('Waiting for live status','실시간 상태 확인 중').replace('Queue Reset Completed','대기열 초기화 완료').replace(/^Ready$/,'준비됨')}
 function listCard(d,index){const state=printerState(d);const tone=state==='Error'?'bad':state==='Queued'?'warn':state==='Unknown'?'bad':'ok';const pcTone=d.pcStatus==='Online'?'ok':'bad';const stateClass=d.error>0?'state-error':d.printing>0?'state-working':d.waiting>0?'state-warning':d.pcStatus==='Online'?'state-online':'';const workingMark=d.printing>0?'<span class="working-dot" aria-hidden="true"></span>':'';const connectionMark=d.pcStatus==='Online'?'<span class="connection-dot" aria-hidden="true"></span>':'';return `<article class="printer-list-card card ${stateClass}" data-name="${d.name.toLowerCase()} ${d.printer.toLowerCase()}"><div class="printer-list-main row1"><div class="printer-list-title">${d.name}</div><div class="printer-list-meta"><span class="list-state ${pcTone}">${connectionMark}${koreanPcStatus(d.pcStatus)}</span><span>${koreanAddress(d.address)}</span></div></div><div class="printer-list-detail detail1"><div class="printer-list-name">${workingMark}${koreanPrinterName(d.printer)}</div><div class="printer-list-meta"><span>인쇄 서비스 ${koreanSpooler(d.spooler)}</span><span class="list-divider">│</span><span class="list-state ${tone}">${koreanPrinterState(state)}</span></div></div><div class="printer-list-meta row2"><span>출력 중 <b>${d.printing}</b></span><span>대기 <b>${d.waiting}</b></span><span>오류 <b>${d.error}</b></span><span class="list-divider">│</span><span>${koreanLastAction(d.lastAction)}</span></div><button class="icon-btn" onclick="resetQueue(${index})" title="대기열 초기화" aria-label="대기열 초기화">${d.pcStatus==='Online'?'<span class="connection-dot" aria-hidden="true"></span>':''}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M18.5 9A7 7 0 0 0 6.3 6.3L4 8.6"/><path d="M5.5 15A7 7 0 0 0 17.7 17.7L20 15.4"/></svg></button></article>`}
 function themeCard(d,index){const stateClass=d.error>0?'state-error':d.printing>0?'state-working':d.waiting>0?'state-warning':d.pcStatus==='Online'?'state-online':'';return card(d,index).replace('<article class="card"',`<article class="card theme-card ${stateClass}"`)}
-function updateViewButtons(){listViewBtn.classList.toggle('active',viewMode==='list');cardViewBtn.classList.toggle('active',viewMode==='card');themeViewBtn.classList.toggle('active',viewMode==='theme');deviceList.classList.toggle('list-view',viewMode==='list')}
+function updateViewButtons(){
+  const listButton=document.getElementById('listViewBtn');
+  const cardButton=document.getElementById('cardViewBtn');
+  const themeButton=document.getElementById('themeViewBtn');
+  const list=document.getElementById('deviceList');
+  listButton?.classList.toggle('active',viewMode==='list');
+  cardButton?.classList.toggle('active',viewMode==='card');
+  themeButton?.classList.toggle('active',viewMode==='theme');
+  list.classList.remove('list-view','card-view','theme-view');
+  list.classList.add(`${viewMode}-view`);
+  list.dataset.viewMode=viewMode;
+}
 function applyDeviceSearch(){const query=search.value.trim().toLowerCase();document.querySelectorAll('#deviceList .card').forEach(item=>item.style.display=item.dataset.name.includes(query)?'':'none')}
-function render(){deviceList.innerHTML=devices.map((d,index)=>viewMode==='list'?listCard(d,index):viewMode==='theme'?themeCard(d,index):card(d,index)).join('');updateViewButtons();applyDeviceSearch()}
-function setViewMode(mode){viewMode=['list','card','theme'].includes(mode)?mode:'list';localStorage.setItem('iprintViewMode',viewMode);render()}
+function render(){
+  const list=document.getElementById('deviceList');
+  const renderer=viewMode==='list'?listCard:viewMode==='theme'?themeCard:card;
+  list.innerHTML=devices.map((d,index)=>renderer(d,index)).join('');
+  updateViewButtons();
+  applyDeviceSearch();
+}
+function setViewMode(mode){
+  viewMode=['list','card','theme'].includes(mode)?mode:'list';
+  localStorage.setItem('iprintViewMode',viewMode);
+  render();
+}
 async function load5800XStatus(){
   try{
     const response=await fetch('/api/devices/5800x/status',{cache:'no-store'});
