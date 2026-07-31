@@ -8,8 +8,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -91,7 +91,24 @@ def startup_event() -> None:
 
 
 @app.get("/")
-def dashboard() -> FileResponse:
+async def dashboard(request: Request):
+    force_view = request.query_params.get("view", "").lower()
+
+    if force_view == "pc":
+        return FileResponse(INDEX_PATH)
+
+    user_agent = request.headers.get("user-agent", "").lower()
+    mobile_keywords = (
+        "android",
+        "iphone",
+        "ipad",
+        "ipod",
+        "mobile",
+    )
+
+    if any(keyword in user_agent for keyword in mobile_keywords):
+        return RedirectResponse(url="/mobile", status_code=302)
+
     return FileResponse(INDEX_PATH)
 
 
