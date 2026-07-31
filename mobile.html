@@ -11,7 +11,8 @@ html,body{margin:0;padding:0;background:linear-gradient(180deg,#2b4d70 0%,var(--
 body{min-width:280px;min-height:100vh}
 header{position:sticky;top:0;z-index:10;padding:5px 4px 4px;background:#183653f2;border-bottom:1px solid #5d7f9d;box-shadow:0 5px 14px #0a172666;backdrop-filter:blur(8px)}
 .header-line{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:27px;padding:0 2px}
-h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;white-space:nowrap}
+h1{margin:0;line-height:1;white-space:nowrap}
+.title-btn{padding:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;cursor:pointer}
 .summary{display:flex;align-items:center;gap:4px}
 .summary-chip{display:flex;align-items:center;gap:4px;height:34px;padding:0 8px;border:1px solid #527493;border-radius:9px;background:#0c2236;box-shadow:inset 0 1px 0 #ffffff12;font-size:13px;color:var(--muted);white-space:nowrap}
 .summary-chip b{font-size:18px;color:#fff}.summary-chip.warn b{color:var(--warn)}.summary-chip.bad b{color:var(--bad)}
@@ -42,14 +43,27 @@ h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;w
 .modal-title{font-size:21px;font-weight:900}.modal-close{width:34px;height:34px;border:1px solid #547593;border-radius:9px;background:#102b43;color:#fff;font-size:21px;cursor:pointer}
 .modal-body{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px}
 .modal-item{padding:9px 10px;border:1px solid #2f506c;border-radius:9px;background:#091a2a}.modal-item.wide{grid-column:1/-1}.modal-item span{display:block;font-size:10px;color:#9fb3c5}.modal-item b{display:block;margin-top:4px;font-size:15px;word-break:break-word}
-@media(max-width:340px){h1{font-size:19px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}.device-line{gap:5px}.name{max-width:36%;font-size:18px}}
+.jobs-panel{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:linear-gradient(180deg,#284866 0%,#1b354f 100%)}
+.jobs-panel.open{display:flex}
+.jobs-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 7px;border-bottom:1px solid #587894;background:#173653;box-shadow:0 4px 12px #07152166}
+.jobs-title{font-size:19px;font-weight:900}.jobs-close{height:34px;padding:0 12px;border:1px solid #5c7e9d;border-radius:8px;background:#102d46;color:#fff;font-size:13px;font-weight:900;cursor:pointer}
+.jobs-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;padding:6px 4px;background:#1c3b58}
+.jobs-search{min-width:0;height:38px;padding:0 11px;border:1px solid #587894;border-radius:8px;background:#0d263c;color:#fff;font-size:14px;outline:none}.jobs-search::placeholder{color:#91a8bc}
+.jobs-search-btn{height:38px;padding:0 14px;border:1px solid #6285a4;border-radius:8px;background:#28577e;color:#fff;font-weight:900;cursor:pointer}
+.jobs-list{flex:1;overflow-y:auto;padding:4px 2px 72px}
+.job-card{margin-bottom:4px;padding:9px 10px;border:1px solid #496b89;border-radius:9px;background:linear-gradient(145deg,#16324c,#0b1e30);box-shadow:0 5px 11px #07152166,inset 0 1px 0 #ffffff14}
+.job-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.job-computer{min-width:0;font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.job-status{flex:none;font-size:12px;font-weight:900}.job-status.completed{color:var(--ok)}.job-status.printing{color:#71b8ff}.job-status.queued{color:var(--warn)}.job-status.error{color:var(--bad)}
+.job-document{margin-top:5px;font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.job-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;color:#a9bdcf;font-size:12px}.job-user{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.job-time{flex:none}
+.jobs-empty{padding:30px 12px;text-align:center;color:#abc0d1}
+.jobs-pagination{position:fixed;left:0;right:0;bottom:0;z-index:26;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:7px 6px;background:#173653f5;border-top:1px solid #587894;box-shadow:0 -5px 14px #07152166}.page-btn{height:36px;border:1px solid #5c7e9d;border-radius:8px;background:#214b6e;color:#fff;font-weight:900;cursor:pointer}.page-btn:disabled{opacity:.4;cursor:not-allowed}.page-info{font-size:13px;font-weight:900;color:#d7e4ef}
+@media(max-width:340px){.title-btn{font-size:19px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}.device-line{gap:5px}.name{max-width:36%;font-size:18px}}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:900px;margin:auto}}
 </style>
 </head>
 <body>
 <header>
   <div class="header-line">
-    <h1>I-PRINT 숭실대</h1>
+    <h1><button class="title-btn" type="button" onclick="openJobsPanel()" aria-label="최근 프린터 작업 보기">I-PRINT 숭실대</button></h1>
     <div class="summary" aria-label="프린터 상태 요약">
       <div class="summary-chip"><span>연결</span><b id="onlineCount">0</b></div>
       <div class="summary-chip warn"><span>대기</span><b id="queuedCount">0</b></div>
@@ -58,6 +72,12 @@ h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;w
   </div>
 </header>
 <main class="grid" id="grid"></main>
+<section class="jobs-panel" id="jobsPanel" aria-label="최근 프린터 작업">
+  <div class="jobs-head"><div class="jobs-title">최근 프린터 작업</div><button class="jobs-close" type="button" onclick="closeJobsPanel()">닫기</button></div>
+  <div class="jobs-tools"><input class="jobs-search" id="jobsSearch" type="search" placeholder="컴퓨터·사용자·문서·상태 검색" onkeydown="if(event.key==='Enter')searchJobs()"><button class="jobs-search-btn" type="button" onclick="searchJobs()">검색</button></div>
+  <div class="jobs-list" id="jobsList"><div class="jobs-empty">불러오는 중...</div></div>
+  <div class="jobs-pagination"><button class="page-btn" id="prevPageBtn" type="button" onclick="changeJobsPage(-1)">이전</button><div class="page-info" id="pageInfo">1 / 1</div><button class="page-btn" id="nextPageBtn" type="button" onclick="changeJobsPage(1)">다음</button></div>
+</section>
 <div class="modal-backdrop" id="statusModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="closeStatusModal(event)">
   <section class="modal">
     <div class="modal-head"><div class="modal-title" id="modalTitle">컴퓨터 상태</div><button class="modal-close" type="button" aria-label="닫기" onclick="closeStatusModal()">×</button></div>
@@ -67,6 +87,52 @@ h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;w
 <script>
 const names=['5800X','Mac mini','학생회관 01','학생회관 02','학생회관 03','학생회관 04','학생회관 05','학생회관 06','베어드홀','숭덕경상관','문화관','미래관','형남공학관','교육관','백마관','한경직기념관','벤처중소기업센터','신양관','진리관','중앙도서관','연구관','창신관','Residence Hall','전산관','정보과학관','웨스트민스터홀','창의관'];
 const devices=names.map((name,i)=>({name,printer:i<2?'상태 확인 중':'미연결',online:false,pcStatus:'Offline',tailscaleStatus:'Offline',tailscaleIp:'-',cpu:0,temp:null,memory:0,disk:0,updatedAt:'-',printing:0,queued:0,error:0}));
+let jobsPage=1;
+let jobsTotalPages=1;
+let jobsSearchText='';
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
+function compactTime(value){
+  const text=String(value||'').trim();
+  const match=text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})/);
+  if(match)return `${Number(match[2])}/${Number(match[3])} ${String(match[4]).padStart(2,'0')}:${match[5]}`;
+  const date=new Date(text);
+  if(Number.isNaN(date.getTime()))return text||'-';
+  return `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+function jobStatusClass(status){
+  const value=String(status||'').toLowerCase();
+  if(value.includes('error')||value.includes('fail'))return'error';
+  if(value.includes('queue')||value.includes('wait'))return'queued';
+  if(value.includes('print'))return'printing';
+  return'completed';
+}
+function openJobsPanel(){
+  document.getElementById('jobsPanel').classList.add('open');
+  document.body.style.overflow='hidden';
+  loadJobs();
+}
+function closeJobsPanel(){
+  document.getElementById('jobsPanel').classList.remove('open');
+  document.body.style.overflow='';
+}
+function searchJobs(){jobsSearchText=document.getElementById('jobsSearch').value.trim();jobsPage=1;loadJobs()}
+function changeJobsPage(delta){const next=jobsPage+delta;if(next<1||next>jobsTotalPages)return;jobsPage=next;loadJobs()}
+async function loadJobs(){
+  const list=document.getElementById('jobsList');
+  const params=new URLSearchParams({page:String(jobsPage)});
+  if(jobsSearchText)params.set('search',jobsSearchText);
+  try{
+    const response=await fetch(`/api/printer-jobs?${params.toString()}`,{cache:'no-store'});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const data=await response.json();
+    jobsPage=Number(data.page||1);
+    jobsTotalPages=Number(data.total_pages||1);
+    list.innerHTML=data.items.length?data.items.map(item=>`<article class="job-card"><div class="job-row"><div class="job-computer">${escapeHtml(item.computer_name)}</div><div class="job-status ${jobStatusClass(item.status)}">${escapeHtml(item.status)}</div></div><div class="job-document">${escapeHtml(item.document_name)}</div><div class="job-meta"><div class="job-user">${escapeHtml(item.user_name)}</div><div class="job-time">${compactTime(item.created_at)}</div></div></article>`).join(''):'<div class="jobs-empty">표시할 작업이 없습니다.</div>';
+    document.getElementById('pageInfo').textContent=`${jobsPage} / ${jobsTotalPages}`;
+    document.getElementById('prevPageBtn').disabled=jobsPage<=1;
+    document.getElementById('nextPageBtn').disabled=jobsPage>=jobsTotalPages;
+  }catch(error){list.innerHTML='<div class="jobs-empty">최근 작업을 불러오지 못했습니다.</div>'}
+}
 function tone(d){if(d.error>0)return'error';if(d.queued>0||d.printing>0)return'warn';return d.online?'online':''}
 function label(d){if(!d.online)return'연결 끊김';if(d.error>0)return'오류';if(d.printing>0)return'출력 중';if(d.queued>0)return'대기 있음';return'정상'}
 function render(){
@@ -95,7 +161,7 @@ function closeStatusModal(event){
   if(event&&event.target!==document.getElementById('statusModal'))return;
   document.getElementById('statusModal').classList.remove('open');
 }
-document.addEventListener('keydown',event=>{if(event.key==='Escape')closeStatusModal()});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeStatusModal();closeJobsPanel()}});
 function requestQueueDelete(index){
   const d=devices[index];
   if(!d.online)return;
@@ -104,7 +170,7 @@ function requestQueueDelete(index){
 }
 async function update(index,url){try{const r=await fetch(url,{cache:'no-store'});const d=await r.json();devices[index].online=!!d.agent_reachable;devices[index].pcStatus=d.pc_status||'Offline';devices[index].tailscaleStatus=d.tailscale_status||'Offline';devices[index].tailscaleIp=d.tailscale_ip||'-';devices[index].cpu=Math.round(Number(d.cpu_percent||0));devices[index].temp=d.temperature_c===null||d.temperature_c===undefined?null:Math.round(Number(d.temperature_c));devices[index].memory=Math.round(Number(d.memory_percent||0));devices[index].disk=Math.round(Number(d.disk_percent||0));devices[index].updatedAt=d.updated_at||'-';devices[index].printer=d.printer_name||'프린터 없음';devices[index].printing=Number(d.printing||0);devices[index].queued=Number(d.queued||0);devices[index].error=Number(d.error||0)}catch(e){devices[index].online=false;devices[index].pcStatus='Offline';devices[index].tailscaleStatus='Offline';devices[index].printer='응답 없음';devices[index].updatedAt='-'}render()}
 function refresh(){update(0,'/api/devices/5800x/status');update(1,'/api/devices/macmini/status')}
-render();refresh();setInterval(refresh,5000);
+render();refresh();setInterval(refresh,5000);setInterval(()=>{if(document.getElementById('jobsPanel').classList.contains('open'))loadJobs()},5000);
 </script>
 </body>
 </html>
