@@ -12,9 +12,9 @@ body{min-width:280px;min-height:100vh}
 header{position:sticky;top:0;z-index:10;padding:5px 4px 4px;background:#183653f2;border-bottom:1px solid #5d7f9d;box-shadow:0 5px 14px #0a172666;backdrop-filter:blur(8px)}
 .header-line{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:27px;padding:0 2px}
 h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;white-space:nowrap}
-.summary{display:flex;align-items:center;gap:3px}
-.summary-chip{display:flex;align-items:center;gap:3px;height:23px;padding:0 6px;border:1px solid #527493;border-radius:7px;background:#0c2236;box-shadow:inset 0 1px 0 #ffffff12;font-size:9px;color:var(--muted);white-space:nowrap}
-.summary-chip b{font-size:12px;color:#fff}.summary-chip.warn b{color:var(--warn)}.summary-chip.bad b{color:var(--bad)}
+.summary{display:flex;align-items:center;gap:4px}
+.summary-chip{display:flex;align-items:center;gap:4px;height:34px;padding:0 8px;border:1px solid #527493;border-radius:9px;background:#0c2236;box-shadow:inset 0 1px 0 #ffffff12;font-size:13px;color:var(--muted);white-space:nowrap}
+.summary-chip b{font-size:18px;color:#fff}.summary-chip.warn b{color:var(--warn)}.summary-chip.bad b{color:var(--bad)}
 .grid{display:grid;grid-template-columns:1fr;gap:4px;padding:4px 1px 8px}
 .card{position:relative;min-width:0;min-height:92px;padding:8px 8px 7px 10px;border:1px solid #456685;border-radius:9px;background:linear-gradient(145deg,#17304a 0%,var(--panel2) 100%);box-shadow:0 7px 14px #07152180,inset 0 1px 0 #ffffff18;overflow:hidden}
 .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#6d8196}
@@ -22,7 +22,7 @@ h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;w
 .card.warn{border-color:#a67b2b}.card.warn:before{background:var(--warn)}
 .card.error{border-color:#ad4d5b}.card.error:before{background:var(--bad)}
 .device-line{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}
-.name{max-width:34%;min-width:0;font-size:13px;font-weight:900;overflow:hidden;text-overflow:ellipsis}
+.name{max-width:36%;min-width:0;padding:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:20px;font-weight:900;text-align:left;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .printer{min-width:0;flex:1;font-size:12px;color:#c5d2df;overflow:hidden;text-overflow:ellipsis}
 .status{flex:none;font-size:13px;font-weight:900}
 .online .status{color:var(--ok)}.warn .status{color:var(--warn)}.error .status{color:var(--bad)}
@@ -35,7 +35,14 @@ h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;w
 .queue-btn{min-width:82px;padding:0 10px;border:1px solid #507293;border-radius:6px;background:#173b5b;color:#f3f8fc;font-size:11px;font-weight:900;line-height:1.15;box-shadow:inset 0 1px 0 #ffffff17,0 3px 8px #06121d66;cursor:pointer}
 .queue-btn:active{transform:translateY(1px)}
 .queue-btn:disabled{border-color:#41566a;background:#1b2a38;color:#718396;box-shadow:none;cursor:not-allowed;opacity:.72}
-@media(max-width:340px){h1{font-size:19px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}.device-line{gap:5px}.name{max-width:32%}}
+.modal-backdrop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:14px;background:#04101dcc;backdrop-filter:blur(5px)}
+.modal-backdrop.open{display:flex}
+.modal{width:min(94vw,420px);border:1px solid #6383a1;border-radius:14px;background:linear-gradient(160deg,#1c3b59,#0a1c2d);box-shadow:0 20px 55px #0009,inset 0 1px 0 #ffffff1a;overflow:hidden}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 15px;border-bottom:1px solid #3e607d}
+.modal-title{font-size:21px;font-weight:900}.modal-close{width:34px;height:34px;border:1px solid #547593;border-radius:9px;background:#102b43;color:#fff;font-size:21px;cursor:pointer}
+.modal-body{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px}
+.modal-item{padding:9px 10px;border:1px solid #2f506c;border-radius:9px;background:#091a2a}.modal-item.wide{grid-column:1/-1}.modal-item span{display:block;font-size:10px;color:#9fb3c5}.modal-item b{display:block;margin-top:4px;font-size:15px;word-break:break-word}
+@media(max-width:340px){h1{font-size:19px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}.device-line{gap:5px}.name{max-width:36%;font-size:18px}}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:900px;margin:auto}}
 </style>
 </head>
@@ -51,24 +58,51 @@ h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;w
   </div>
 </header>
 <main class="grid" id="grid"></main>
+<div class="modal-backdrop" id="statusModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="closeStatusModal(event)">
+  <section class="modal">
+    <div class="modal-head"><div class="modal-title" id="modalTitle">컴퓨터 상태</div><button class="modal-close" type="button" aria-label="닫기" onclick="closeStatusModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </section>
+</div>
 <script>
 const names=['5800X','Mac mini','학생회관 01','학생회관 02','학생회관 03','학생회관 04','학생회관 05','학생회관 06','베어드홀','숭덕경상관','문화관','미래관','형남공학관','교육관','백마관','한경직기념관','벤처중소기업센터','신양관','진리관','중앙도서관','연구관','창신관','Residence Hall','전산관','정보과학관','웨스트민스터홀','창의관'];
-const devices=names.map((name,i)=>({name,printer:i<2?'상태 확인 중':'미연결',online:false,printing:0,queued:0,error:0}));
+const devices=names.map((name,i)=>({name,printer:i<2?'상태 확인 중':'미연결',online:false,pcStatus:'Offline',tailscaleStatus:'Offline',tailscaleIp:'-',cpu:0,temp:null,memory:0,disk:0,updatedAt:'-',printing:0,queued:0,error:0}));
 function tone(d){if(d.error>0)return'error';if(d.queued>0||d.printing>0)return'warn';return d.online?'online':''}
 function label(d){if(!d.online)return'연결 끊김';if(d.error>0)return'오류';if(d.printing>0)return'출력 중';if(d.queued>0)return'대기 있음';return'정상'}
 function render(){
-  document.getElementById('grid').innerHTML=devices.map((d,index)=>`<article class="card ${tone(d)}"><div class="device-line"><div class="name">${d.name}</div><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><span class="dot"></span></div><div class="card-bottom"><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div><button class="queue-btn" type="button" onclick="requestQueueDelete(${index})" ${d.online?'':'disabled'}>대기열 삭제</button></div></article>`).join('');
+  document.getElementById('grid').innerHTML=devices.map((d,index)=>`<article class="card ${tone(d)}"><div class="device-line"><button class="name" type="button" onclick="openStatusModal(${index})" title="컴퓨터 상태 보기">${d.name}</button><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><span class="dot"></span></div><div class="card-bottom"><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div><button class="queue-btn" type="button" onclick="requestQueueDelete(${index})" ${d.online?'':'disabled'}>대기열 삭제</button></div></article>`).join('');
   document.getElementById('onlineCount').textContent=devices.filter(d=>d.online).length;
   document.getElementById('queuedCount').textContent=devices.reduce((sum,d)=>sum+d.queued,0);
   document.getElementById('errorCount').textContent=devices.reduce((sum,d)=>sum+d.error,0);
 }
+function valueOrDash(value,suffix=''){return value===null||value===undefined||value===''?'-':`${value}${suffix}`}
+function openStatusModal(index){
+  const d=devices[index];
+  document.getElementById('modalTitle').textContent=`${d.name} 상태`;
+  document.getElementById('modalBody').innerHTML=`
+    <div class="modal-item"><span>PC 상태</span><b>${d.pcStatus}</b></div>
+    <div class="modal-item"><span>Tailscale</span><b>${d.tailscaleStatus}</b></div>
+    <div class="modal-item"><span>CPU</span><b>${valueOrDash(d.cpu,'%')}</b></div>
+    <div class="modal-item"><span>온도</span><b>${valueOrDash(d.temp,'℃')}</b></div>
+    <div class="modal-item"><span>메모리</span><b>${valueOrDash(d.memory,'%')}</b></div>
+    <div class="modal-item"><span>디스크</span><b>${valueOrDash(d.disk,'%')}</b></div>
+    <div class="modal-item wide"><span>Tailscale IP</span><b>${d.tailscaleIp||'-'}</b></div>
+    <div class="modal-item wide"><span>프린터</span><b>${d.printer}</b></div>
+    <div class="modal-item wide"><span>마지막 갱신</span><b>${d.updatedAt||'-'}</b></div>`;
+  document.getElementById('statusModal').classList.add('open');
+}
+function closeStatusModal(event){
+  if(event&&event.target!==document.getElementById('statusModal'))return;
+  document.getElementById('statusModal').classList.remove('open');
+}
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeStatusModal()});
 function requestQueueDelete(index){
   const d=devices[index];
   if(!d.online)return;
   if(!confirm(`${d.name}의 프린터 대기열을 삭제하시겠습니까?`))return;
   alert('원격 대기열 삭제 API 연결 전입니다. 버튼 배치와 장비 선택 기능만 적용되었습니다.');
 }
-async function update(index,url){try{const r=await fetch(url,{cache:'no-store'});const d=await r.json();devices[index].online=!!d.agent_reachable;devices[index].printer=d.printer_name||'프린터 없음';devices[index].printing=Number(d.printing||0);devices[index].queued=Number(d.queued||0);devices[index].error=Number(d.error||0)}catch(e){devices[index].online=false;devices[index].printer='응답 없음'}render()}
+async function update(index,url){try{const r=await fetch(url,{cache:'no-store'});const d=await r.json();devices[index].online=!!d.agent_reachable;devices[index].pcStatus=d.pc_status||'Offline';devices[index].tailscaleStatus=d.tailscale_status||'Offline';devices[index].tailscaleIp=d.tailscale_ip||'-';devices[index].cpu=Math.round(Number(d.cpu_percent||0));devices[index].temp=d.temperature_c===null||d.temperature_c===undefined?null:Math.round(Number(d.temperature_c));devices[index].memory=Math.round(Number(d.memory_percent||0));devices[index].disk=Math.round(Number(d.disk_percent||0));devices[index].updatedAt=d.updated_at||'-';devices[index].printer=d.printer_name||'프린터 없음';devices[index].printing=Number(d.printing||0);devices[index].queued=Number(d.queued||0);devices[index].error=Number(d.error||0)}catch(e){devices[index].online=false;devices[index].pcStatus='Offline';devices[index].tailscaleStatus='Offline';devices[index].printer='응답 없음';devices[index].updatedAt='-'}render()}
 function refresh(){update(0,'/api/devices/5800x/status');update(1,'/api/devices/macmini/status')}
 render();refresh();setInterval(refresh,5000);
 </script>
