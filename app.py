@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import math
+import os
 import sqlite3
 import urllib.error
 import urllib.request
@@ -9,20 +12,56 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "printer_jobs.db"
 INDEX_PATH = BASE_DIR / "index.html"
 MOBILE_PATH = BASE_DIR / "mobile.html"
+LOGIN_PATH = BASE_DIR / "login.html"
 ASSETS_PATH = BASE_DIR / "assets"
 PAGE_SIZE = 10
+ADMIN_USERNAME = os.getenv("IPRINT_ADMIN_USERNAME", "i-print")
+ADMIN_PASSWORD = os.getenv("IPRINT_ADMIN_PASSWORD", "ssu")
+AUTH_SECRET = os.getenv("IPRINT_AUTH_SECRET", "iprint-local-session-secret-change-before-public")
+AUTH_COOKIE_NAME = "iprint_admin_session"
+AUTH_COOKIE_MAX_AGE = 60 * 60 * 12
 PC_5800X_AGENT_URL = "http://100.117.206.9:8898/status"
 MAC_MINI_AGENT_URL = "http://100.116.128.62:8898/status"
 
 app = FastAPI(title="i-Print Dashboard")
 app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="assets")
+
+
+def create_auth_token() -> str:
+    return hmac.new(
+        AUTH_SECRET.encode("utf-8"),
+        ADMIN_USERNAME.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def is_authenticated(request: Request) -> bool:
+    received_token = request.cookies.get(AUTH_COOKIE_NAME, "")
+    return bool(received_token) and hmac.compare_digest(received_token, create_auth_token())
+
+
+@app.middleware("http")
+async def require_admin_login(request: Request, call_next):
+    public_paths = {"/login", "/api/login", "/health"}
+    path = request.url.path
+
+    if path in public_paths or path.startswith("/assets/"):
+        return await call_next(request)
+
+    if is_authenticated(request):
+        return await call_next(request)
+
+    if path.startswith("/api/"):
+        return JSONResponse({"ok": False, "detail": "로그인이 필요합니다."}, status_code=401)
+
+    return RedirectResponse(url="/login", status_code=302)
 
 
 def get_connection() -> sqlite3.Connection:
@@ -88,6 +127,47 @@ def initialize_database() -> None:
 @app.on_event("startup")
 def startup_event() -> None:
     initialize_database()
+
+
+@app.get("/login")
+def login_page(request: Request):
+    if is_authenticated(request):
+        return RedirectResponse(url="/", status_code=302)
+    return FileResponse(LOGIN_PATH)
+
+
+@app.post("/api/login")
+async def login(request: Request):
+    try:
+        payload = await request.json()
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JSONResponse({"ok": False, "detail": "로그인 정보를 확인해주세요."}, status_code=400)
+
+    username = str(payload.get("username", "")).strip()
+    password = str(payload.get("password", ""))
+    username_matches = hmac.compare_digest(username, ADMIN_USERNAME)
+    password_matches = hmac.compare_digest(password, ADMIN_PASSWORD)
+
+    if not (username_matches and password_matches):
+        return JSONResponse({"ok": False, "detail": "아이디 또는 비밀번호가 올바르지 않습니다."}, status_code=401)
+
+    response = JSONResponse({"ok": True})
+    response.set_cookie(
+        key=AUTH_COOKIE_NAME,
+        value=create_auth_token(),
+        max_age=AUTH_COOKIE_MAX_AGE,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+    )
+    return response
+
+
+@app.get("/logout")
+def logout():
+    response = RedirectResponse(url="/login", status_code=302)
+    response.delete_cookie(AUTH_COOKIE_NAME)
+    return response
 
 
 @app.get("/")

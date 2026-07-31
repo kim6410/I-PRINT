@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I-PRINT 관리자 로그인</title>
+<style>
+:root{--bg:#07111f;--line:#284865;--text:#eff6ff;--muted:#91a4bd;--blue:#5da8ff;--bad:#ff6577}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif;background:radial-gradient(circle at 80% 0,#17375a 0,transparent 35%),var(--bg);color:var(--text)}body{min-height:100vh;display:grid;place-items:center;padding:20px}.backdrop{position:fixed;inset:0;background:linear-gradient(135deg,rgba(5,14,26,.78),rgba(8,22,39,.9));backdrop-filter:blur(8px)}.modal{position:relative;width:min(420px,100%);padding:30px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(19,40,63,.98),rgba(8,20,34,.98));box-shadow:0 28px 70px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.08)}.eyebrow{color:#76baff;font-size:12px;font-weight:900;letter-spacing:.14em}h1{margin:10px 0 8px;font-size:30px;letter-spacing:-.04em}p{margin:0 0 24px;color:var(--muted);font-size:14px;line-height:1.6}label{display:block;margin:14px 0 7px;color:#b9cbe0;font-size:13px;font-weight:800}input{width:100%;height:48px;padding:0 14px;border:1px solid #315171;border-radius:12px;background:#091727;color:#fff;font-size:16px;outline:none;transition:.18s ease}input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(93,168,255,.14)}button{width:100%;height:50px;margin-top:20px;border:1px solid #4f8dcc;border-radius:13px;background:linear-gradient(125deg,#187ec8,#285ab8);color:#fff;font-size:16px;font-weight:900;cursor:pointer;box-shadow:0 12px 28px rgba(19,91,173,.25)}button:hover{filter:brightness(1.08)}button:disabled{opacity:.55;cursor:wait}.error{min-height:22px;margin-top:12px;color:var(--bad);font-size:13px;font-weight:800;text-align:center}.lock{display:inline-grid;place-items:center;width:34px;height:34px;margin-bottom:4px;border:1px solid #3d6489;border-radius:10px;background:#102c47;color:#8ec8ff;font-size:19px}
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+<main class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+<div class="lock" aria-hidden="true">▣</div>
+<div class="eyebrow">I-PRINT ADMIN ACCESS</div>
+<h1 id="loginTitle">관리자 로그인</h1>
+<p>등록된 관리자만 I-PRINT 관제 대시보드에 접근할 수 있습니다.</p>
+<form id="loginForm">
+<label for="username">아이디</label>
+<input id="username" name="username" type="text" autocomplete="username" required autofocus>
+<label for="password">비밀번호</label>
+<input id="password" name="password" type="password" autocomplete="current-password" required>
+<button id="loginButton" type="submit">로그인</button>
+<div class="error" id="loginError" role="alert"></div>
+</form>
+</main>
+<script>
+const form=document.getElementById('loginForm');
+const button=document.getElementById('loginButton');
+const errorBox=document.getElementById('loginError');
+form.addEventListener('submit',async event=>{
+event.preventDefault();errorBox.textContent='';button.disabled=true;button.textContent='확인 중...';
+try{
+const response=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.value.trim(),password:password.value})});
+const data=await response.json();
+if(!response.ok)throw new Error(data.detail||'로그인에 실패했습니다.');
+location.replace('/');
+}catch(error){errorBox.textContent=error.message||'로그인에 실패했습니다.';password.focus();password.select();}
+finally{button.disabled=false;button.textContent='로그인';}
+});
+</script>
+</body>
+</html>
