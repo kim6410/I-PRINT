@@ -7,7 +7,7 @@
   <style>
     :root{--bg:#07111f;--panel:#0d1b2d;--panel2:#12243a;--text:#eff6ff;--muted:#91a4bd;--line:#203754;--ok:#33d69f;--warn:#ffbf4b;--bad:#ff6577;--blue:#5da8ff}
     *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 80% 0,#17375a 0,transparent 35%),var(--bg);color:var(--text);font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}
-    .wrap{max-width:1500px;margin:auto;padding:28px}.hero{position:relative;overflow:hidden;min-height:250px;padding:0;border:1px solid #294967;border-radius:26px;background:#0b1730;box-shadow:0 24px 80px #0007;isolation:isolate}.hero-bg{position:absolute;inset:-3%;z-index:-2;background:center/cover no-repeat;opacity:0;transform:scale(1.02);transition:opacity 3.2s ease-in-out;will-change:transform,opacity}.hero-bg.is-active{opacity:1;animation:iprintHeroKenburns 30s ease-in-out forwards}.hero-bg.is-leaving{opacity:0}@keyframes iprintHeroKenburns{0%{transform:scale(1.03) translate3d(0,0,0)}50%{transform:scale(1.16) translate3d(-1.25%,-.9%,0)}100%{transform:scale(1.07) translate3d(.9%,.65%,0)}}.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,26,74,.9) 0%,rgba(8,26,74,.68) 38%,rgba(8,26,74,.3) 65%,rgba(8,26,74,.08) 100%);z-index:-1}.hero:after{content:"";position:absolute;inset:auto 0 0;height:42%;background:linear-gradient(0deg,rgba(1,8,25,.45),transparent);z-index:-1}.hero-content{position:relative;z-index:1;display:flex;min-height:250px;flex-direction:column;justify-content:center;align-items:flex-start;width:min(70%,850px);padding:34px}.eyebrow{color:#8fd6ff;font-weight:900;letter-spacing:.12em;font-size:12px;text-shadow:0 2px 10px rgba(0,0,0,.4)}.hero h1{font-size:38px;margin:10px 0;color:#f7fbff;text-shadow:0 3px 16px rgba(0,0,0,.62),0 1px 0 rgba(0,0,0,.3)}.hero p{color:#eef6ff;margin:0;font-weight:750;text-shadow:0 2px 10px rgba(0,0,0,.48)}.live{position:absolute;z-index:2;right:28px;bottom:28px;color:var(--ok);font-weight:800;text-shadow:0 2px 9px rgba(0,0,0,.75)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok);margin-right:8px}@media(prefers-reduced-motion:reduce){.hero-bg{animation:none!important;transition:opacity .8s ease-in-out}}
+    .wrap{max-width:1500px;margin:auto;padding:28px}.hero{position:relative;overflow:hidden;min-height:250px;padding:0;border:1px solid #294967;border-radius:26px;background:#0b1730;box-shadow:0 24px 80px #0007;isolation:isolate}.admin-gear{position:absolute;top:22px;right:22px;z-index:5;min-height:44px;padding:0 16px;border:1px solid rgba(173,211,255,.46);border-radius:13px;background:rgba(8,24,44,.78);color:#e8f4ff;display:inline-flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;backdrop-filter:blur(12px);box-shadow:0 12px 30px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.12);font-weight:850;font-size:14px;letter-spacing:-.02em;transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.admin-gear:hover{transform:translateY(-2px);background:rgba(27,73,115,.9);border-color:#8fd6ff;box-shadow:0 16px 34px rgba(0,0,0,.4),0 0 18px rgba(93,168,255,.16),inset 0 1px 0 rgba(255,255,255,.14)}.admin-gear svg{width:20px;height:20px;flex:0 0 20px}.admin-gear span{white-space:nowrap}.admin-shell{position:fixed;inset:0;z-index:1000;display:none;background:#07111f;overflow:auto}.admin-shell.open{display:block}.admin-panel{width:100%;min-height:100vh;background:radial-gradient(circle at 85% 0,#17375a 0,transparent 34%),linear-gradient(180deg,#10233a,#07111f);padding:30px max(36px,calc((100vw - 1080px)/2)) 60px}.admin-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:20px;border-bottom:1px solid #203754}.admin-title{font-size:26px;font-weight:900}.admin-title-link{color:inherit;text-decoration:none;display:inline-block;cursor:pointer;transition:color .16s ease,transform .16s ease}.admin-title-link:hover{color:#8fd6ff;transform:translateY(-1px)}.admin-sub{margin-top:7px;color:#91a4bd;line-height:1.6}.admin-close{width:42px;height:42px;border:1px solid #315171;border-radius:12px;background:#12243a;color:white;font-size:24px;cursor:pointer}.admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0}.admin-primary{border:1px solid #4a9bef;background:#1f67a6;color:white;border-radius:12px;padding:12px 16px;font-weight:850;cursor:pointer}.admin-device-list{display:grid;gap:12px}.admin-device-row{display:grid;grid-template-columns:28px minmax(160px,1.15fr) minmax(150px,.95fr) minmax(150px,1fr) auto;gap:12px;align-items:center;min-height:64px;padding:11px 14px;border:1px solid #294765;border-radius:14px;background:linear-gradient(145deg,#12243a,#0a1727);box-shadow:0 9px 20px rgba(0,0,0,.22)}.admin-device-name{font-weight:900;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admin-device-meta{margin:0;color:#91a4bd;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admin-device-address,.admin-place-computer,.admin-location,.admin-computer{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.admin-place-computer{display:flex;align-items:center;gap:8px}.admin-location{color:#c8dcf3;font-weight:800;flex:0 1 auto}.admin-place-separator{color:#4d6b89;flex:0 0 auto}.admin-computer{color:#91a4bd;font-size:12px;flex:1 1 auto}.admin-row-actions{display:flex;gap:7px;flex-wrap:nowrap;justify-content:flex-end}.admin-row-btn{border:1px solid #315171;background:#15314f;color:#eaf4ff;border-radius:9px;padding:7px 10px;font-weight:750;cursor:pointer;white-space:nowrap}.admin-row-btn.danger{border-color:#713643;background:#3d1822;color:#ffd8dd}.admin-note{margin-top:20px;padding:15px 17px;border:1px dashed #3a5d80;border-radius:14px;color:#9fb5cd;background:#0a1727;line-height:1.65}.admin-form{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:20px 0;padding:18px;border:1px solid #294765;border-radius:18px;background:#0a1727}.admin-field{display:grid;gap:7px}.admin-field span{color:#9fb5cd;font-size:12px;font-weight:800}.admin-field input,.admin-field select{width:100%;border:1px solid #315171;border-radius:11px;background:#10243b;color:#eff6ff;padding:11px 12px}.admin-form-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:9px}.admin-secondary{border:1px solid #315171;background:#15314f;color:#eaf4ff;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}.admin-device-row{cursor:grab}.admin-device-row.dragging{opacity:.45;transform:scale(.99)}.admin-drag{color:#6f8cab;font-size:20px;user-select:none}.admin-save-state{margin-left:auto;color:#8fd6ff;font-size:13px;font-weight:800;align-self:center}.admin-home{display:inline-flex;align-items:center;gap:7px}.admin-empty{padding:35px;text-align:center;color:#91a4bd;border:1px dashed #315171;border-radius:16px}.admin-device-row{grid-template-columns:28px minmax(150px,1.05fr) minmax(150px,.95fr) minmax(170px,1.15fr) auto}.admin-location small{display:block;color:#7f96b0;font-weight:600;margin-top:2px}@media(max-width:1100px){.admin-form{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:760px){.admin-form{grid-template-columns:1fr}.admin-device-row{grid-template-columns:28px 1fr}.admin-location,.admin-row-actions{grid-column:2}.admin-row-actions{justify-content:flex-start}}.hero-bg{position:absolute;inset:-3%;z-index:-2;background:center/cover no-repeat;opacity:0;transform:scale(1.02);transition:opacity 3.2s ease-in-out;will-change:transform,opacity}.hero-bg.is-active{opacity:1;animation:iprintHeroKenburns 30s ease-in-out forwards}.hero-bg.is-leaving{opacity:0}@keyframes iprintHeroKenburns{0%{transform:scale(1.03) translate3d(0,0,0)}50%{transform:scale(1.16) translate3d(-1.25%,-.9%,0)}100%{transform:scale(1.07) translate3d(.9%,.65%,0)}}.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,26,74,.9) 0%,rgba(8,26,74,.68) 38%,rgba(8,26,74,.3) 65%,rgba(8,26,74,.08) 100%);z-index:-1}.hero:after{content:"";position:absolute;inset:auto 0 0;height:42%;background:linear-gradient(0deg,rgba(1,8,25,.45),transparent);z-index:-1}.hero-content{position:relative;z-index:1;display:flex;min-height:250px;flex-direction:column;justify-content:center;align-items:flex-start;width:min(70%,850px);padding:34px}.eyebrow{color:#8fd6ff;font-weight:900;letter-spacing:.12em;font-size:12px;text-shadow:0 2px 10px rgba(0,0,0,.4)}.hero h1{font-size:38px;margin:10px 0;color:#f7fbff;text-shadow:0 3px 16px rgba(0,0,0,.62),0 1px 0 rgba(0,0,0,.3)}.hero p{color:#eef6ff;margin:0;font-weight:750;text-shadow:0 2px 10px rgba(0,0,0,.48)}.live{position:absolute;z-index:2;right:28px;bottom:28px;color:var(--ok);font-weight:800;text-shadow:0 2px 9px rgba(0,0,0,.75)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok);margin-right:8px}@media(prefers-reduced-motion:reduce){.hero-bg{animation:none!important;transition:opacity .8s ease-in-out}}
     .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:18px 0}.stat,.card,.tablebox{border:1px solid var(--line);background:#0c1929dd;border-radius:19px}.stat{padding:20px}.stat b{font-size:29px;display:block;margin-top:7px}.stat span{color:var(--muted);font-size:13px}
     .toolbar{display:flex;gap:10px;align-items:center;margin:18px 0;flex-wrap:wrap}.toolbar input,.toolbar select{background:#0d1c2e;color:white;border:1px solid #29415f;border-radius:12px;padding:12px 14px}.toolbar input{min-width:280px}.btn{border:1px solid #315171;background:#15314f;color:#eaf4ff;border-radius:12px;padding:11px 15px;font-weight:750;cursor:pointer}.btn:hover{filter:brightness(1.2)}.view-switch{display:inline-flex;border:1px solid #315171;border-radius:12px;overflow:hidden;background:#0d1c2e}.view-btn{border:0;border-right:1px solid #315171;background:transparent;color:#9eb5cf;padding:11px 14px;font-weight:800;cursor:pointer}.view-btn:last-child{border-right:0}.view-btn.active{background:#24527f;color:white}.view-btn svg{width:16px;height:16px;vertical-align:-3px;margin-right:6px}
     .devices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{padding:12px}.theme-card{position:relative;isolation:isolate;background:linear-gradient(145deg,rgba(20,42,66,.98),rgba(7,18,31,.98));border:1px solid rgba(105,154,205,.48);box-shadow:0 18px 38px rgba(0,0,0,.58),0 6px 14px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.11),inset 0 -1px 0 rgba(0,0,0,.5);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.theme-card:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 28%,transparent 72%,rgba(0,0,0,.18));z-index:-1}.theme-card:hover{transform:translateY(-3px);border-color:rgba(116,184,255,.82);box-shadow:0 24px 48px rgba(0,0,0,.66),0 10px 20px rgba(0,0,0,.44),0 0 22px rgba(70,148,255,.13),inset 0 1px 0 rgba(255,255,255,.15)}.theme-card.state-online{border-color:rgba(51,214,159,.5);box-shadow:0 18px 38px rgba(0,0,0,.58),0 0 18px rgba(51,214,159,.1),inset 0 1px 0 rgba(255,255,255,.11)}.theme-card.state-working{border-color:rgba(93,168,255,.72);box-shadow:0 18px 38px rgba(0,0,0,.58),0 0 24px rgba(93,168,255,.2),inset 0 1px 0 rgba(255,255,255,.12)}.theme-card.state-warning{border-color:rgba(255,191,75,.7);box-shadow:0 18px 38px rgba(0,0,0,.58),0 0 22px rgba(255,191,75,.16),inset 0 1px 0 rgba(255,255,255,.11)}.theme-card.state-error{border-color:rgba(255,101,119,.78);box-shadow:0 18px 38px rgba(0,0,0,.6),0 0 25px rgba(255,101,119,.2),inset 0 1px 0 rgba(255,255,255,.11)}.theme-card .status-box,.theme-card .metric,.theme-card .printer,.theme-card .job{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 4px 10px rgba(0,0,0,.22)}.head{display:flex;justify-content:space-between;gap:10px}.name{font-size:19px;font-weight:850}.sub{color:var(--muted);font-size:12px;margin-top:2px}.badge{height:25px;padding:4px 9px;border-radius:99px;font-size:11px;font-weight:850}.ok{color:var(--ok);background:#33d69f18}.warn{color:var(--warn);background:#ffbf4b18}.bad{color:var(--bad);background:#ff657718}.status-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.status-box{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:7px 9px;border:1px solid #1d3550;border-radius:10px;background:#0a1726}.status-box small{color:var(--muted);font-size:9px;letter-spacing:.05em}.status-value{font-size:11px;font-weight:900}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.metric{background:#101f32;border:1px solid #1d3550;border-radius:10px;padding:7px 8px;display:grid;grid-template-columns:auto auto minmax(24px,1fr);align-items:center;gap:7px}.metric small{color:var(--muted);font-size:10px;white-space:nowrap}.metric strong{display:inline;font-size:14px;line-height:1;white-space:nowrap}.bar{height:5px;background:#07111f;border-radius:9px;margin-top:0;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#4f9cff,#53e1c1);border-radius:9px}.printer{margin-top:10px;padding:10px;border-radius:12px;background:#091523;border:1px solid #1b314a}.card,.card *{min-width:0}.printer-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.printer-top>div{min-width:0;flex:1}.printer-top strong,.printer-top .sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.icon-btn{width:34px;height:34px;min-width:34px;padding:0;border:1px solid #315171;background:#173756;color:#dcecff;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 34px}.icon-btn:hover{background:#214b73}.icon-btn svg{width:17px;height:17px;display:block}.jobs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}.job{padding:7px 6px;border-radius:8px;background:#102238;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}.job b{display:inline;font-size:15px;line-height:1}.job span{font-size:9px;color:var(--muted)}
@@ -30,6 +30,7 @@
   <section class="hero" id="iprintHero">
     <div class="hero-bg is-active" data-hero-bg="0"></div>
     <div class="hero-bg" data-hero-bg="1"></div>
+    <button class="admin-gear" type="button" aria-label="장비 관리 열기" title="장비 관리" onclick="openDeviceAdmin()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>장비 관리</span></button>
     <div class="hero-content">
       <div class="eyebrow">I-PRINT REMOTE CONTROL CENTER</div>
       <h1>I-PRINT 숭실대학교</h1>
@@ -74,6 +75,39 @@
     <div class="pagination" id="jobPagination"></div>
   </section>
 </div>
+<div class="admin-shell" id="deviceAdminShell" role="dialog" aria-modal="true" aria-labelledby="deviceAdminTitle">
+  <main class="admin-panel">
+    <div class="admin-head">
+      <div>
+        <div class="admin-title" id="deviceAdminTitle"><a class="admin-title-link" href="/?view=pc" title="홈으로 가기">장비 관리자</a></div>
+        <div class="admin-sub">장비 등록, 이름·위치 수정, 순서 이동, 삭제 내용을 SQLite DB에 저장합니다.</div>
+      </div>
+      <div class="admin-row-actions">
+        <button class="admin-secondary admin-home" type="button" onclick="closeDeviceAdmin()">홈으로 가기</button>
+      </div>
+    </div>
+    <div class="admin-actions">
+      <button class="admin-primary" type="button" onclick="openDeviceForm()">+ 신규 장비 등록</button>
+      <button class="btn" type="button" onclick="loadManagedDevices(true)">목록 새로고침</button>
+      <div class="admin-save-state" id="adminSaveState">DB 연결 대기</div>
+    </div>
+    <form class="admin-form" id="deviceAdminForm" hidden onsubmit="saveDeviceForm(event)">
+      <input type="hidden" id="adminDeviceId">
+      <label class="admin-field"><span>장비 이름</span><input id="adminDeviceName" maxlength="80" required placeholder="예: 학생회관 07"></label>
+      <label class="admin-field"><span>설치 위치</span><input id="adminDeviceLocation" maxlength="120" placeholder="예: 학생회관 1층"></label>
+      <label class="admin-field"><span>컴퓨터 이름</span><input id="adminComputerName" maxlength="120" placeholder="예: DESKTOP-ABC123"></label>
+      <label class="admin-field"><span>운영체제</span><select id="adminDeviceOs"><option>Windows</option><option>macOS</option><option>Linux</option></select></label>
+      <label class="admin-field"><span>Tailscale IP</span><input id="adminTailscaleIp" maxlength="45" placeholder="100.x.x.x"></label>
+      <label class="admin-field"><span>에이전트 포트</span><input id="adminAgentPort" type="number" min="1" max="65535" value="8898"></label>
+      <div class="admin-form-actions">
+        <button class="admin-secondary" type="button" onclick="closeDeviceForm()">취소</button>
+        <button class="admin-primary" type="submit">DB에 저장</button>
+      </div>
+    </form>
+    <div class="admin-device-list" id="adminDeviceList"></div>
+    <div class="admin-note">장비 행 왼쪽의 이동 손잡이를 잡아 위아래로 옮기면 카드 표시 순서가 즉시 DB에 저장됩니다. 삭제는 운영 기록 보호를 위해 DB에서 비활성 처리합니다.</div>
+  </main>
+</div>
 <script>
 const heroImages=[
   '/assets/hero/iprint-hero-01.jpg',
@@ -87,6 +121,68 @@ const heroImages=[
   '/assets/hero/iprint-hero-09.jpg',
   '/assets/hero/iprint-hero-10.jpg'
 ];
+function escapeAdminHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]))}
+let draggedDeviceId=null;
+function setAdminState(message,isError=false){const target=document.getElementById('adminSaveState');if(target){target.textContent=message;target.style.color=isError?'#ff8b98':'#8fd6ff'}}
+function toDashboardDevice(item){return {id:item.id,name:item.name,computerName:item.computer_name||'',location:item.location||'',os:item.os||'Windows',tailscaleIp:item.tailscale_ip||'',agentPort:Number(item.agent_port||8898),statusKey:item.status_key||'',address:item.address||'Agent Not Installed',pcStatus:'Offline',tailscaleStatus:'Offline',cpu:0,temp:null,ram:0,disk:0,printer:'Printer Not Connected',spooler:'Unknown',printing:0,waiting:0,error:0,lastAction:'Waiting for live status'}}
+async function loadManagedDevices(refreshAdmin=false){
+  try{
+    const response=await fetch('/api/devices',{cache:'no-store'});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const data=await response.json();
+    const liveByKey=new Map(devices.filter(device=>device.statusKey).map(device=>[device.statusKey,device]));
+    const loaded=data.items.map(item=>{const next=toDashboardDevice(item),live=liveByKey.get(next.statusKey);return live?{...next,pcStatus:live.pcStatus,tailscaleStatus:live.tailscaleStatus,cpu:live.cpu,temp:live.temp,ram:live.ram,disk:live.disk,printer:live.printer,spooler:live.spooler,printing:live.printing,waiting:live.waiting,error:live.error,lastAction:live.lastAction}:next});
+    devices.splice(0,devices.length,...loaded);
+    document.getElementById('totalPc').textContent=String(devices.length);
+    render();
+    if(refreshAdmin||document.getElementById('deviceAdminShell')?.classList.contains('open'))renderAdminDeviceShell();
+    setAdminState(`DB 연결 정상 · ${devices.length}대`);
+  }catch(error){setAdminState('DB 목록 조회 실패',true);console.error(error)}
+}
+function renderAdminDeviceShell(){
+  const target=document.getElementById('adminDeviceList');
+  if(!target)return;
+  if(!devices.length){target.innerHTML='<div class="admin-empty">등록된 장비가 없습니다.</div>';return}
+  target.innerHTML=devices.map(device=>`<div class="admin-device-row" draggable="true" data-device-id="${device.id}" ondragstart="startDeviceDrag(event,${device.id})" ondragover="event.preventDefault()" ondrop="dropDeviceRow(event,${device.id})" ondragend="endDeviceDrag(event)"><div class="admin-drag" title="드래그하여 순서 변경">⋮⋮</div><div class="admin-device-name">${escapeAdminHtml(device.name)}</div><div class="admin-device-address admin-device-meta">${escapeAdminHtml(device.address||'주소 미등록')}</div><div class="admin-place-computer"><span class="admin-location">${escapeAdminHtml(device.location||'위치 미등록')}</span><span class="admin-place-separator">·</span><span class="admin-computer">${escapeAdminHtml(device.computerName||'컴퓨터 이름 미등록')}</span></div><div class="admin-row-actions"><button class="admin-row-btn" type="button" onclick="openDeviceForm(${device.id})">수정</button><button class="admin-row-btn danger" type="button" onclick="deleteManagedDevice(${device.id})">삭제</button></div></div>`).join('');
+}
+function openDeviceAdmin(){document.getElementById('deviceAdminShell')?.classList.add('open');document.body.style.overflow='hidden';loadManagedDevices(true)}
+function closeDeviceAdmin(){document.getElementById('deviceAdminShell')?.classList.remove('open');document.body.style.overflow='';closeDeviceForm()}
+function openDeviceForm(deviceId=null){
+  const form=document.getElementById('deviceAdminForm'),device=deviceId?devices.find(item=>item.id===deviceId):null;
+  document.getElementById('adminDeviceId').value=device?.id||'';
+  document.getElementById('adminDeviceName').value=device?.name||'';
+  document.getElementById('adminDeviceLocation').value=device?.location||'';
+  document.getElementById('adminComputerName').value=device?.computerName||'';
+  document.getElementById('adminDeviceOs').value=['Windows','macOS','Linux'].includes(device?.os)?device.os:'Windows';
+  document.getElementById('adminTailscaleIp').value=device?.tailscaleIp||'';
+  document.getElementById('adminAgentPort').value=device?.agentPort||8898;
+  form.hidden=false;document.getElementById('adminDeviceName').focus();form.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function closeDeviceForm(){const form=document.getElementById('deviceAdminForm');if(form){form.hidden=true;form.reset();document.getElementById('adminDeviceId').value='';document.getElementById('adminAgentPort').value=8898}}
+async function saveDeviceForm(event){
+  event.preventDefault();
+  const id=document.getElementById('adminDeviceId').value;
+  const payload={name:document.getElementById('adminDeviceName').value.trim(),location:document.getElementById('adminDeviceLocation').value.trim(),computer_name:document.getElementById('adminComputerName').value.trim(),os:document.getElementById('adminDeviceOs').value,tailscale_ip:document.getElementById('adminTailscaleIp').value.trim(),agent_port:Number(document.getElementById('adminAgentPort').value||8898)};
+  setAdminState('DB 저장 중...');
+  try{
+    const response=await fetch(id?`/api/admin/devices/${id}`:'/api/admin/devices',{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await response.json();if(!response.ok)throw new Error(data.detail||'저장 실패');
+    closeDeviceForm();await loadManagedDevices(true);setAdminState(id?'장비 수정 완료':'신규 장비 등록 완료');
+  }catch(error){setAdminState(error.message,true);alert(error.message)}
+}
+async function deleteManagedDevice(deviceId){
+  const device=devices.find(item=>item.id===deviceId);if(!device||!confirm(`${device.name} 장비를 삭제하시겠습니까?`))return;
+  try{const response=await fetch(`/api/admin/devices/${deviceId}`,{method:'DELETE'});const data=await response.json();if(!response.ok)throw new Error(data.detail||'삭제 실패');await loadManagedDevices(true);setAdminState('장비 삭제 완료')}catch(error){setAdminState(error.message,true);alert(error.message)}
+}
+function startDeviceDrag(event,deviceId){draggedDeviceId=deviceId;event.currentTarget.classList.add('dragging');event.dataTransfer.effectAllowed='move'}
+function endDeviceDrag(event){event.currentTarget.classList.remove('dragging');draggedDeviceId=null}
+async function dropDeviceRow(event,targetId){
+  event.preventDefault();if(!draggedDeviceId||draggedDeviceId===targetId)return;
+  const from=devices.findIndex(item=>item.id===draggedDeviceId),to=devices.findIndex(item=>item.id===targetId);if(from<0||to<0)return;
+  const [moved]=devices.splice(from,1);devices.splice(to,0,moved);render();renderAdminDeviceShell();
+  try{setAdminState('표시 순서 저장 중...');const response=await fetch('/api/admin/device-order',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({ordered_ids:devices.map(item=>item.id)})});const data=await response.json();if(!response.ok)throw new Error(data.detail||'순서 저장 실패');setAdminState('표시 순서 DB 저장 완료')}catch(error){setAdminState(error.message,true);await loadManagedDevices(true)}
+}
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.getElementById('deviceAdminShell')?.classList.contains('open'))closeDeviceAdmin()});
 function startHeroSlideshow(){
   const hero=document.getElementById('iprintHero');
   const layers=[...hero.querySelectorAll('.hero-bg')];
@@ -185,8 +281,8 @@ async function load5800XStatus(){
     const response=await fetch('/api/devices/5800x/status',{cache:'no-store'});
     if(!response.ok)throw new Error('HTTP '+response.status);
     const data=await response.json();
-    const d=devices[0];
-    d.name='5800X';
+    const d=devices.find(device=>device.statusKey==='5800x')||devices.find(device=>device.name==='5800X');
+    if(!d)return;
     d.os=data.cpu_name?`Windows 11 Home · ${data.cpu_name.replace(/\s+Processor$/i,'')}`:'Windows 11 Home · AMD Ryzen 7 5800X 8-Core';
     d.address=data.tailscale_ip?`Tailscale ${data.tailscale_ip}`:'Tailscale Unavailable';
     d.pcStatus=data.pc_status||'Offline';
@@ -203,7 +299,8 @@ async function load5800XStatus(){
     d.lastAction=data.agent_reachable?`Live · ${data.updated_at||'Now'}`:'Agent Unreachable';
     render();
   }catch(error){
-    const d=devices[0];
+    const d=devices.find(device=>device.statusKey==='5800x')||devices.find(device=>device.name==='5800X');
+    if(!d)return;
     d.pcStatus='Offline';d.tailscaleStatus='Offline';d.cpu=0;d.temp=null;d.ram=0;d.disk=0;d.printer='Unavailable';d.spooler='Unknown';d.printing=0;d.waiting=0;d.error=0;d.lastAction='Agent Unreachable';render();
   }
 }
@@ -212,8 +309,8 @@ async function loadMacMiniStatus(){
     const response=await fetch('/api/devices/macmini/status',{cache:'no-store'});
     if(!response.ok)throw new Error('HTTP '+response.status);
     const data=await response.json();
-    const d=devices[1];
-    d.name='Mac mini';
+    const d=devices.find(device=>device.statusKey==='macmini')||devices.find(device=>device.name==='Mac mini');
+    if(!d)return;
     d.os=data.cpu_name?`macOS · ${data.cpu_name}`:'macOS · Apple M1';
     d.address=data.tailscale_ip?`Tailscale ${data.tailscale_ip}`:'Tailscale Unavailable';
     d.pcStatus=data.pc_status||'Offline';
@@ -230,7 +327,8 @@ async function loadMacMiniStatus(){
     d.lastAction=data.agent_reachable?`Live · ${data.updated_at||'Now'}`:'Agent Unreachable';
     render();
   }catch(error){
-    const d=devices[1];
+    const d=devices.find(device=>device.statusKey==='macmini')||devices.find(device=>device.name==='Mac mini');
+    if(!d)return;
     d.pcStatus='Offline';d.tailscaleStatus='Offline';d.cpu=0;d.temp=null;d.ram=0;d.disk=0;d.printer='Unavailable';d.spooler='Unknown';d.printing=0;d.waiting=0;d.error=0;d.lastAction='Agent Unreachable';render();
   }
 }
@@ -270,8 +368,7 @@ jobSearchForm.addEventListener('submit',event=>{event.preventDefault();jobQuery=
 jobSearchClear.addEventListener('click',()=>{jobSearch.value='';jobQuery='';loadPrinterJobs(1)});
 startHeroSlideshow();
 render();
-load5800XStatus();
-loadMacMiniStatus();
+loadManagedDevices().then(()=>{load5800XStatus();loadMacMiniStatus()});
 loadPrinterJobs(1);
 setInterval(load5800XStatus,5000);
 setInterval(loadMacMiniStatus,5000);

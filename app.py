@@ -121,6 +121,64 @@ def initialize_database() -> None:
                 """,
                 sample_rows,
             )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS managed_devices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                display_name TEXT NOT NULL,
+                computer_name TEXT NOT NULL DEFAULT '',
+                location TEXT NOT NULL DEFAULT '',
+                operating_system TEXT NOT NULL DEFAULT 'Windows',
+                tailscale_ip TEXT NOT NULL DEFAULT '',
+                agent_port INTEGER NOT NULL DEFAULT 8898,
+                status_key TEXT NOT NULL DEFAULT '',
+                display_order INTEGER NOT NULL DEFAULT 0,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        device_count = connection.execute("SELECT COUNT(*) FROM managed_devices").fetchone()[0]
+        if device_count == 0:
+            seed_devices = [
+                ("5800X", "DESKTOP-5S6BVJE", "관리 장비", "Windows 11 Home", "100.117.206.9", 8898, "5800x", 1),
+                ("Mac mini", "MacMiniui-Macmini.local", "관리 장비", "macOS", "100.116.128.62", 8898, "macmini", 2),
+                ("학생회관 01", "", "학생회관", "Windows", "", 8898, "", 3),
+                ("학생회관 02", "", "학생회관", "Windows", "", 8898, "", 4),
+                ("학생회관 03", "", "학생회관", "Windows", "", 8898, "", 5),
+                ("학생회관 04", "", "학생회관", "Windows", "", 8898, "", 6),
+                ("학생회관 05", "", "학생회관", "Windows", "", 8898, "", 7),
+                ("학생회관 06", "", "학생회관", "Windows", "", 8898, "", 8),
+                ("베어드홀", "", "베어드홀", "Windows", "", 8898, "", 9),
+                ("숭덕경상관", "", "숭덕경상관", "Windows", "", 8898, "", 10),
+                ("문화관", "", "문화관", "Windows", "", 8898, "", 11),
+                ("미래관", "", "미래관", "Windows", "", 8898, "", 12),
+                ("형남공학관", "", "형남공학관", "Windows", "", 8898, "", 13),
+                ("교육관", "", "교육관", "Windows", "", 8898, "", 14),
+                ("백마관", "", "백마관", "Windows", "", 8898, "", 15),
+                ("한경직기념관", "", "한경직기념관", "Windows", "", 8898, "", 16),
+                ("벤처중소기업센터", "", "벤처중소기업센터", "Windows", "", 8898, "", 17),
+                ("신양관", "", "신양관", "Windows", "", 8898, "", 18),
+                ("진리관", "", "진리관", "Windows", "", 8898, "", 19),
+                ("중앙도서관", "", "중앙도서관", "Windows", "", 8898, "", 20),
+                ("연구관", "", "연구관", "Windows", "", 8898, "", 21),
+                ("창신관", "", "창신관", "Windows", "", 8898, "", 22),
+                ("Residence Hall", "", "Residence Hall", "Windows", "", 8898, "", 23),
+                ("전산관", "", "전산관", "Windows", "", 8898, "", 24),
+                ("정보과학관", "", "정보과학관", "Windows", "", 8898, "", 25),
+                ("웨스트민스터홀", "", "웨스트민스터홀", "Windows", "", 8898, "", 26),
+                ("창의관", "", "창의관", "Windows", "", 8898, "", 27),
+            ]
+            connection.executemany(
+                """
+                INSERT INTO managed_devices (
+                    display_name, computer_name, location, operating_system,
+                    tailscale_ip, agent_port, status_key, display_order
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                seed_devices,
+            )
         connection.commit()
 
 
@@ -195,6 +253,131 @@ async def dashboard(request: Request):
 @app.get("/mobile")
 def mobile_dashboard() -> FileResponse:
     return FileResponse(MOBILE_PATH)
+
+
+def serialize_device(row: sqlite3.Row) -> dict[str, Any]:
+    tailscale_ip = row["tailscale_ip"] or ""
+    agent_port = int(row["agent_port"] or 8898)
+    return {
+        "id": row["id"],
+        "name": row["display_name"],
+        "computer_name": row["computer_name"],
+        "location": row["location"],
+        "os": row["operating_system"],
+        "tailscale_ip": tailscale_ip,
+        "agent_port": agent_port,
+        "status_key": row["status_key"],
+        "display_order": row["display_order"],
+        "enabled": bool(row["enabled"]),
+        "address": f"Tailscale {tailscale_ip}" if tailscale_ip else "Agent Not Installed",
+        "status_url": f"http://{tailscale_ip}:{agent_port}/status" if tailscale_ip else "",
+    }
+
+
+@app.get("/api/devices")
+def list_managed_devices() -> dict[str, Any]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT id, display_name, computer_name, location, operating_system,
+                   tailscale_ip, agent_port, status_key, display_order, enabled
+            FROM managed_devices
+            WHERE enabled = 1
+            ORDER BY display_order ASC, id ASC
+            """
+        ).fetchall()
+    return {"items": [serialize_device(row) for row in rows]}
+
+
+@app.post("/api/admin/devices")
+async def create_managed_device(request: Request):
+    payload = await request.json()
+    display_name = str(payload.get("name", "")).strip()
+    if not display_name:
+        return JSONResponse({"ok": False, "detail": "장비 이름을 입력해주세요."}, status_code=400)
+    location = str(payload.get("location", "")).strip()
+    computer_name = str(payload.get("computer_name", "")).strip()
+    operating_system = str(payload.get("os", "Windows")).strip() or "Windows"
+    tailscale_ip = str(payload.get("tailscale_ip", "")).strip()
+    agent_port = int(payload.get("agent_port", 8898) or 8898)
+    with get_connection() as connection:
+        next_order = connection.execute(
+            "SELECT COALESCE(MAX(display_order), 0) + 1 FROM managed_devices"
+        ).fetchone()[0]
+        cursor = connection.execute(
+            """
+            INSERT INTO managed_devices (
+                display_name, computer_name, location, operating_system,
+                tailscale_ip, agent_port, display_order, enabled, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+            """,
+            (display_name, computer_name, location, operating_system, tailscale_ip, agent_port, next_order),
+        )
+        connection.commit()
+        device_id = cursor.lastrowid
+    return {"ok": True, "id": device_id}
+
+
+@app.put("/api/admin/devices/{device_id}")
+async def update_managed_device(device_id: int, request: Request):
+    payload = await request.json()
+    display_name = str(payload.get("name", "")).strip()
+    if not display_name:
+        return JSONResponse({"ok": False, "detail": "장비 이름을 입력해주세요."}, status_code=400)
+    with get_connection() as connection:
+        existing = connection.execute(
+            "SELECT id FROM managed_devices WHERE id = ? AND enabled = 1", (device_id,)
+        ).fetchone()
+        if existing is None:
+            return JSONResponse({"ok": False, "detail": "장비를 찾을 수 없습니다."}, status_code=404)
+        connection.execute(
+            """
+            UPDATE managed_devices
+            SET display_name = ?, computer_name = ?, location = ?, operating_system = ?,
+                tailscale_ip = ?, agent_port = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                display_name,
+                str(payload.get("computer_name", "")).strip(),
+                str(payload.get("location", "")).strip(),
+                str(payload.get("os", "Windows")).strip() or "Windows",
+                str(payload.get("tailscale_ip", "")).strip(),
+                int(payload.get("agent_port", 8898) or 8898),
+                device_id,
+            ),
+        )
+        connection.commit()
+    return {"ok": True}
+
+
+@app.delete("/api/admin/devices/{device_id}")
+def delete_managed_device(device_id: int):
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "UPDATE managed_devices SET enabled = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND enabled = 1",
+            (device_id,),
+        )
+        connection.commit()
+    if cursor.rowcount == 0:
+        return JSONResponse({"ok": False, "detail": "장비를 찾을 수 없습니다."}, status_code=404)
+    return {"ok": True}
+
+
+@app.put("/api/admin/device-order")
+async def reorder_managed_devices(request: Request):
+    payload = await request.json()
+    ordered_ids = payload.get("ordered_ids", [])
+    if not isinstance(ordered_ids, list) or not ordered_ids:
+        return JSONResponse({"ok": False, "detail": "저장할 장비 순서가 없습니다."}, status_code=400)
+    with get_connection() as connection:
+        for position, raw_id in enumerate(ordered_ids, start=1):
+            connection.execute(
+                "UPDATE managed_devices SET display_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND enabled = 1",
+                (position, int(raw_id)),
+            )
+        connection.commit()
+    return {"ok": True}
 
 
 @app.get("/api/printer-jobs")
