@@ -17,23 +17,27 @@ h1{margin:0;line-height:1;white-space:nowrap}
 .summary-chip{display:flex;align-items:center;gap:4px;height:34px;padding:0 8px;border:1px solid #527493;border-radius:9px;background:#0c2236;box-shadow:inset 0 1px 0 #ffffff12;font-size:13px;color:var(--muted);white-space:nowrap}
 .summary-chip b{font-size:18px;color:#fff}.summary-chip.warn b{color:var(--warn)}.summary-chip.bad b{color:var(--bad)}
 .grid{display:grid;grid-template-columns:1fr;gap:4px;padding:4px 1px 8px}
-.card{position:relative;min-width:0;min-height:92px;padding:8px 8px 7px 10px;border:1px solid #456685;border-radius:9px;background:linear-gradient(145deg,#17304a 0%,var(--panel2) 100%);box-shadow:0 7px 14px #07152180,inset 0 1px 0 #ffffff18;overflow:hidden}
-.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#6d8196}
-.card.online{border-color:#3d8a70}.card.online:before{background:var(--ok)}
-.card.warn{border-color:#a67b2b}.card.warn:before{background:var(--warn)}
-.card.error{border-color:#ad4d5b}.card.error:before{background:var(--bad)}
+.card{position:relative;isolation:isolate;min-width:0;min-height:92px;padding:8px 8px 7px 10px;border:1px solid rgba(105,154,205,.58);border-radius:10px;background:linear-gradient(145deg,rgba(26,58,88,.99) 0%,rgba(8,24,39,.99) 100%);box-shadow:0 16px 30px rgba(0,0,0,.52),0 6px 12px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.48);overflow:hidden}
+.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#6d8196;z-index:2}
+.card:after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.11),transparent 29%,transparent 70%,rgba(0,0,0,.22));z-index:-1}
+.card.online{border-color:rgba(50,214,160,.68);box-shadow:0 16px 30px rgba(0,0,0,.52),0 0 22px rgba(50,214,160,.17),inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.48)}.card.online:before{background:var(--ok)}
+.card.working{border-color:rgba(93,168,255,.78);box-shadow:0 16px 30px rgba(0,0,0,.52),0 0 27px rgba(93,168,255,.25),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.48);animation:workingGlow 1.9s ease-in-out infinite}
+.card.warn{border-color:rgba(255,192,77,.78);box-shadow:0 16px 30px rgba(0,0,0,.52),0 0 23px rgba(255,192,77,.20),inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.48)}.card.warn:before{background:var(--warn)}
+.card.error{border-color:rgba(255,107,125,.82);box-shadow:0 16px 30px rgba(0,0,0,.56),0 0 27px rgba(255,107,125,.24),inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.5)}.card.error:before{background:var(--bad)}
+@keyframes workingGlow{0%,100%{filter:brightness(.96)}50%{filter:brightness(1.08)}}
+@media(prefers-reduced-motion:reduce){.card.working{animation:none}}
 .device-line{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}
 .name{max-width:36%;min-width:0;padding:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:20px;font-weight:900;text-align:left;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .printer{min-width:0;flex:1;font-size:12px;color:#c5d2df;overflow:hidden;text-overflow:ellipsis}
 .status{flex:none;font-size:13px;font-weight:900}
-.online .status{color:var(--ok)}.warn .status{color:var(--warn)}.error .status{color:var(--bad)}
+.online .status{color:var(--ok)}.working .status{color:#69b1ff}.warn .status{color:var(--warn)}.error .status{color:var(--bad)}
 .dot{width:8px;height:8px;border-radius:50%;background:#8291a0;box-shadow:0 0 7px #8291a088;flex:none}
-.online .dot{background:var(--ok);box-shadow:0 0 8px #32d6a099}.warn .dot{background:var(--warn);box-shadow:0 0 8px #ffc04d99}.error .dot{background:var(--bad);box-shadow:0 0 8px #ff6b7d99}
+.online .dot{background:var(--ok);box-shadow:0 0 8px #32d6a099}.working .dot{background:#69b1ff;box-shadow:0 0 10px #69b1ffbb}.warn .dot{background:var(--warn);box-shadow:0 0 8px #ffc04d99}.error .dot{background:var(--bad);box-shadow:0 0 8px #ff6b7d99}
 .card-bottom{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:stretch;margin-top:6px}
 .counts{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:0}
-.count{padding:4px 1px 3px;border:1px solid #27435d;border-radius:5px;background:#091827cc;text-align:center;box-shadow:inset 0 1px 0 #ffffff0b}
+.count{padding:4px 1px 3px;border:1px solid rgba(65,101,133,.72);border-radius:6px;background:linear-gradient(180deg,rgba(16,43,67,.96),rgba(5,18,30,.96));text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.42),0 5px 11px rgba(0,0,0,.28)}
 .count b{display:block;font-size:13px;line-height:1.05}.count span{display:block;margin-top:2px;font-size:9px;color:#9fb1c2}
-.queue-btn{min-width:82px;padding:0 10px;border:1px solid #507293;border-radius:6px;background:#173b5b;color:#f3f8fc;font-size:11px;font-weight:900;line-height:1.15;box-shadow:inset 0 1px 0 #ffffff17,0 3px 8px #06121d66;cursor:pointer}
+.queue-btn{min-width:82px;padding:0 10px;border:1px solid rgba(95,143,184,.8);border-radius:7px;background:linear-gradient(180deg,#24557c,#12344f);color:#f3f8fc;font-size:11px;font-weight:900;line-height:1.15;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.38),0 7px 14px rgba(0,0,0,.34);cursor:pointer}
 .queue-btn:active{transform:translateY(1px)}
 .queue-btn:disabled{border-color:#41566a;background:#1b2a38;color:#718396;box-shadow:none;cursor:not-allowed;opacity:.72}
 .modal-backdrop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:14px;background:#04101dcc;backdrop-filter:blur(5px)}
@@ -133,7 +137,7 @@ async function loadJobs(){
     document.getElementById('nextPageBtn').disabled=jobsPage>=jobsTotalPages;
   }catch(error){list.innerHTML='<div class="jobs-empty">최근 작업을 불러오지 못했습니다.</div>'}
 }
-function tone(d){if(d.error>0)return'error';if(d.queued>0||d.printing>0)return'warn';return d.online?'online':''}
+function tone(d){if(d.error>0)return'error';if(d.printing>0)return'working';if(d.queued>0)return'warn';return d.online?'online':''}
 function label(d){if(!d.online)return'연결 끊김';if(d.error>0)return'오류';if(d.printing>0)return'출력 중';if(d.queued>0)return'대기 있음';return'정상'}
 function render(){
   document.getElementById('grid').innerHTML=devices.map((d,index)=>`<article class="card ${tone(d)}"><div class="device-line"><button class="name" type="button" onclick="openStatusModal(${index})" title="컴퓨터 상태 보기">${d.name}</button><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><span class="dot"></span></div><div class="card-bottom"><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div><button class="queue-btn" type="button" onclick="requestQueueDelete(${index})" ${d.online?'':'disabled'}>대기열 삭제</button></div></article>`).join('');
