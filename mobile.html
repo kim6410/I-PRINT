@@ -28,9 +28,13 @@ h1{margin:0;font-size:15px;line-height:1;font-weight:900;letter-spacing:-.45px}
 .printer{margin-top:5px;font-size:11px;color:#c5d2df;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .status{margin-top:5px;font-size:13px;font-weight:900}
 .online .status{color:var(--ok)}.warn .status{color:var(--warn)}.error .status{color:var(--bad)}
-.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px}
+.card-bottom{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:stretch;margin-top:6px}
+.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:0}
 .count{padding:4px 1px 3px;border:1px solid #27435d;border-radius:5px;background:#091827cc;text-align:center;box-shadow:inset 0 1px 0 #ffffff0b}
 .count b{display:block;font-size:13px;line-height:1.05}.count span{display:block;margin-top:2px;font-size:9px;color:#9fb1c2}
+.queue-btn{min-width:82px;padding:0 10px;border:1px solid #507293;border-radius:6px;background:#173b5b;color:#f3f8fc;font-size:11px;font-weight:900;line-height:1.15;box-shadow:inset 0 1px 0 #ffffff17,0 3px 8px #06121d66;cursor:pointer}
+.queue-btn:active{transform:translateY(1px)}
+.queue-btn:disabled{border-color:#41566a;background:#1b2a38;color:#718396;box-shadow:none;cursor:not-allowed;opacity:.72}
 @media(max-width:340px){h1{font-size:14px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:900px;margin:auto}}
 </style>
@@ -53,10 +57,16 @@ const devices=names.map((name,i)=>({name,printer:i<2?'상태 확인 중':'미연
 function tone(d){if(d.error>0)return'error';if(d.queued>0||d.printing>0)return'warn';return d.online?'online':''}
 function label(d){if(!d.online)return'연결 끊김';if(d.error>0)return'오류';if(d.printing>0)return'출력 중';if(d.queued>0)return'대기 있음';return'정상'}
 function render(){
-  document.getElementById('grid').innerHTML=devices.map(d=>`<article class="card ${tone(d)}"><div class="top"><div class="name">${d.name}</div><span class="dot"></span></div><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div></article>`).join('');
+  document.getElementById('grid').innerHTML=devices.map((d,index)=>`<article class="card ${tone(d)}"><div class="top"><div class="name">${d.name}</div><span class="dot"></span></div><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><div class="card-bottom"><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div><button class="queue-btn" type="button" onclick="requestQueueDelete(${index})" ${d.online?'':'disabled'}>대기열 삭제</button></div></article>`).join('');
   document.getElementById('onlineCount').textContent=devices.filter(d=>d.online).length;
   document.getElementById('queuedCount').textContent=devices.reduce((sum,d)=>sum+d.queued,0);
   document.getElementById('errorCount').textContent=devices.reduce((sum,d)=>sum+d.error,0);
+}
+function requestQueueDelete(index){
+  const d=devices[index];
+  if(!d.online)return;
+  if(!confirm(`${d.name}의 프린터 대기열을 삭제하시겠습니까?`))return;
+  alert('원격 대기열 삭제 API 연결 전입니다. 버튼 배치와 장비 선택 기능만 적용되었습니다.');
 }
 async function update(index,url){try{const r=await fetch(url,{cache:'no-store'});const d=await r.json();devices[index].online=!!d.agent_reachable;devices[index].printer=d.printer_name||'프린터 없음';devices[index].printing=Number(d.printing||0);devices[index].queued=Number(d.queued||0);devices[index].error=Number(d.error||0)}catch(e){devices[index].online=false;devices[index].printer='응답 없음'}render()}
 function refresh(){update(0,'/api/devices/5800x/status');update(1,'/api/devices/macmini/status')}
