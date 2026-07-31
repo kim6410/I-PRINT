@@ -50,7 +50,7 @@ h1{margin:0;line-height:1;white-space:nowrap}
 .jobs-panel{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:linear-gradient(180deg,#284866 0%,#1b354f 100%)}
 .jobs-panel.open{display:flex}
 .jobs-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 7px;border-bottom:1px solid #587894;background:#173653;box-shadow:0 4px 12px #07152166}
-.jobs-title{font-size:19px;font-weight:900}.jobs-close{height:34px;padding:0 12px;border:1px solid #5c7e9d;border-radius:8px;background:#102d46;color:#fff;font-size:13px;font-weight:900;cursor:pointer}
+.jobs-title{padding:0;border:0;background:transparent;color:#fff;font:inherit;font-size:19px;font-weight:900;cursor:pointer}.jobs-close{height:34px;padding:0 12px;border:1px solid #5c7e9d;border-radius:8px;background:#102d46;color:#fff;font-size:13px;font-weight:900;cursor:pointer}
 .jobs-tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;padding:6px 4px;background:#1c3b58}
 .jobs-search{min-width:0;height:38px;padding:0 11px;border:1px solid #587894;border-radius:8px;background:#0d263c;color:#fff;font-size:14px;outline:none}.jobs-search::placeholder{color:#91a8bc}
 .jobs-search-btn{height:38px;padding:0 14px;border:1px solid #6285a4;border-radius:8px;background:#28577e;color:#fff;font-weight:900;cursor:pointer}
@@ -77,7 +77,7 @@ h1{margin:0;line-height:1;white-space:nowrap}
 </header>
 <main class="grid" id="grid"></main>
 <section class="jobs-panel" id="jobsPanel" aria-label="최근 프린터 작업">
-  <div class="jobs-head"><div class="jobs-title">최근 프린터 작업</div><button class="jobs-close" type="button" onclick="closeJobsPanel()">닫기</button></div>
+  <div class="jobs-head"><button class="jobs-title" type="button" onclick="closeJobsPanel()" aria-label="프린터 관제 화면으로 돌아가기">최근 프린터 작업</button><button class="jobs-close" type="button" onclick="closeJobsPanel()">닫기</button></div>
   <div class="jobs-tools"><input class="jobs-search" id="jobsSearch" type="search" placeholder="컴퓨터·사용자·문서·상태 검색" onkeydown="if(event.key==='Enter')searchJobs()"><button class="jobs-search-btn" type="button" onclick="searchJobs()">검색</button></div>
   <div class="jobs-list" id="jobsList"><div class="jobs-empty">불러오는 중...</div></div>
   <div class="jobs-pagination"><button class="page-btn" id="prevPageBtn" type="button" onclick="changeJobsPage(-1)">이전</button><div class="page-info" id="pageInfo">1 / 1</div><button class="page-btn" id="nextPageBtn" type="button" onclick="changeJobsPage(1)">다음</button></div>
