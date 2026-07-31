@@ -11,7 +11,7 @@ html,body{margin:0;padding:0;background:linear-gradient(180deg,#2b4d70 0%,var(--
 body{min-width:280px;min-height:100vh}
 header{position:sticky;top:0;z-index:10;padding:5px 4px 4px;background:#183653f2;border-bottom:1px solid #5d7f9d;box-shadow:0 5px 14px #0a172666;backdrop-filter:blur(8px)}
 .header-line{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:27px;padding:0 2px}
-h1{margin:0;font-size:15px;line-height:1;font-weight:900;letter-spacing:-.45px}
+h1{margin:0;font-size:21px;line-height:1;font-weight:900;letter-spacing:-.65px;white-space:nowrap}
 .summary{display:flex;align-items:center;gap:3px}
 .summary-chip{display:flex;align-items:center;gap:3px;height:23px;padding:0 6px;border:1px solid #527493;border-radius:7px;background:#0c2236;box-shadow:inset 0 1px 0 #ffffff12;font-size:9px;color:var(--muted);white-space:nowrap}
 .summary-chip b{font-size:12px;color:#fff}.summary-chip.warn b{color:var(--warn)}.summary-chip.bad b{color:var(--bad)}
@@ -21,13 +21,13 @@ h1{margin:0;font-size:15px;line-height:1;font-weight:900;letter-spacing:-.45px}
 .card.online{border-color:#3d8a70}.card.online:before{background:var(--ok)}
 .card.warn{border-color:#a67b2b}.card.warn:before{background:var(--warn)}
 .card.error{border-color:#ad4d5b}.card.error:before{background:var(--bad)}
-.top{display:flex;align-items:center;justify-content:space-between;gap:4px}
-.name{min-width:0;font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.device-line{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}
+.name{max-width:34%;min-width:0;font-size:13px;font-weight:900;overflow:hidden;text-overflow:ellipsis}
+.printer{min-width:0;flex:1;font-size:12px;color:#c5d2df;overflow:hidden;text-overflow:ellipsis}
+.status{flex:none;font-size:13px;font-weight:900}
+.online .status{color:var(--ok)}.warn .status{color:var(--warn)}.error .status{color:var(--bad)}
 .dot{width:8px;height:8px;border-radius:50%;background:#8291a0;box-shadow:0 0 7px #8291a088;flex:none}
 .online .dot{background:var(--ok);box-shadow:0 0 8px #32d6a099}.warn .dot{background:var(--warn);box-shadow:0 0 8px #ffc04d99}.error .dot{background:var(--bad);box-shadow:0 0 8px #ff6b7d99}
-.printer{margin-top:5px;font-size:11px;color:#c5d2df;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.status{margin-top:5px;font-size:13px;font-weight:900}
-.online .status{color:var(--ok)}.warn .status{color:var(--warn)}.error .status{color:var(--bad)}
 .card-bottom{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:stretch;margin-top:6px}
 .counts{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:0}
 .count{padding:4px 1px 3px;border:1px solid #27435d;border-radius:5px;background:#091827cc;text-align:center;box-shadow:inset 0 1px 0 #ffffff0b}
@@ -35,7 +35,7 @@ h1{margin:0;font-size:15px;line-height:1;font-weight:900;letter-spacing:-.45px}
 .queue-btn{min-width:82px;padding:0 10px;border:1px solid #507293;border-radius:6px;background:#173b5b;color:#f3f8fc;font-size:11px;font-weight:900;line-height:1.15;box-shadow:inset 0 1px 0 #ffffff17,0 3px 8px #06121d66;cursor:pointer}
 .queue-btn:active{transform:translateY(1px)}
 .queue-btn:disabled{border-color:#41566a;background:#1b2a38;color:#718396;box-shadow:none;cursor:not-allowed;opacity:.72}
-@media(max-width:340px){h1{font-size:14px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}}
+@media(max-width:340px){h1{font-size:19px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}.device-line{gap:5px}.name{max-width:32%}}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:900px;margin:auto}}
 </style>
 </head>
@@ -57,7 +57,7 @@ const devices=names.map((name,i)=>({name,printer:i<2?'상태 확인 중':'미연
 function tone(d){if(d.error>0)return'error';if(d.queued>0||d.printing>0)return'warn';return d.online?'online':''}
 function label(d){if(!d.online)return'연결 끊김';if(d.error>0)return'오류';if(d.printing>0)return'출력 중';if(d.queued>0)return'대기 있음';return'정상'}
 function render(){
-  document.getElementById('grid').innerHTML=devices.map((d,index)=>`<article class="card ${tone(d)}"><div class="top"><div class="name">${d.name}</div><span class="dot"></span></div><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><div class="card-bottom"><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div><button class="queue-btn" type="button" onclick="requestQueueDelete(${index})" ${d.online?'':'disabled'}>대기열 삭제</button></div></article>`).join('');
+  document.getElementById('grid').innerHTML=devices.map((d,index)=>`<article class="card ${tone(d)}"><div class="device-line"><div class="name">${d.name}</div><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><span class="dot"></span></div><div class="card-bottom"><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div><button class="queue-btn" type="button" onclick="requestQueueDelete(${index})" ${d.online?'':'disabled'}>대기열 삭제</button></div></article>`).join('');
   document.getElementById('onlineCount').textContent=devices.filter(d=>d.online).length;
   document.getElementById('queuedCount').textContent=devices.reduce((sum,d)=>sum+d.queued,0);
   document.getElementById('errorCount').textContent=devices.reduce((sum,d)=>sum+d.error,0);
