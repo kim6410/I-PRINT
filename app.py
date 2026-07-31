@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "printer_jobs.db"
 INDEX_PATH = BASE_DIR / "index.html"
+MOBILE_PATH = BASE_DIR / "mobile.html"
 PAGE_SIZE = 10
 PC_5800X_AGENT_URL = "http://100.117.206.9:8898/status"
 MAC_MINI_AGENT_URL = "http://100.116.128.62:8898/status"
@@ -89,6 +90,11 @@ def startup_event() -> None:
 @app.get("/")
 def dashboard() -> FileResponse:
     return FileResponse(INDEX_PATH)
+
+
+@app.get("/mobile")
+def mobile_dashboard() -> FileResponse:
+    return FileResponse(MOBILE_PATH)
 
 
 @app.get("/api/printer-jobs")
