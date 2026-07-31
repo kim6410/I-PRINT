@@ -15,7 +15,7 @@ h1{margin:0;font-size:15px;line-height:1;font-weight:900;letter-spacing:-.45px}
 .summary{display:flex;align-items:center;gap:3px}
 .summary-chip{display:flex;align-items:center;gap:3px;height:23px;padding:0 6px;border:1px solid #527493;border-radius:7px;background:#0c2236;box-shadow:inset 0 1px 0 #ffffff12;font-size:9px;color:var(--muted);white-space:nowrap}
 .summary-chip b{font-size:12px;color:#fff}.summary-chip.warn b{color:var(--warn)}.summary-chip.bad b{color:var(--bad)}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px 3px 8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px 1px 8px}
 .card{position:relative;min-width:0;min-height:92px;padding:8px 8px 7px 10px;border:1px solid #456685;border-radius:9px;background:linear-gradient(145deg,#17304a 0%,var(--panel2) 100%);box-shadow:0 7px 14px #07152180,inset 0 1px 0 #ffffff18;overflow:hidden}
 .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#6d8196}
 .card.online{border-color:#3d8a70}.card.online:before{background:var(--ok)}
@@ -31,7 +31,7 @@ h1{margin:0;font-size:15px;line-height:1;font-weight:900;letter-spacing:-.45px}
 .counts{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px}
 .count{padding:4px 1px 3px;border:1px solid #27435d;border-radius:5px;background:#091827cc;text-align:center;box-shadow:inset 0 1px 0 #ffffff0b}
 .count b{display:block;font-size:13px;line-height:1.05}.count span{display:block;margin-top:2px;font-size:9px;color:#9fb1c2}
-@media(max-width:340px){h1{font-size:14px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:4px;padding-left:2px;padding-right:2px}.card{padding-left:8px;padding-right:6px}}
+@media(max-width:340px){h1{font-size:14px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:3px;padding-left:0;padding-right:0}.card{padding-left:8px;padding-right:6px}}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:900px;margin:auto}}
 </style>
 </head>
