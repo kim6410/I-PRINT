@@ -6,36 +6,58 @@
 <title>I-PRINT 모바일</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:#0d1117;color:#eef2f7;font-family:Arial,"Noto Sans KR",sans-serif}
-body{min-width:280px}
-header{height:38px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #273142;background:#111827;position:sticky;top:0;z-index:10}
-h1{margin:0;font-size:15px;line-height:1;font-weight:800;letter-spacing:-.3px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:3px}
-.card{min-width:0;min-height:88px;padding:7px 7px 6px;border:1px solid #263244;border-radius:6px;background:#151c27;overflow:hidden}
-.card.online{border-color:#236e4a;background:#12231d}
-.card.warn{border-color:#9a6a18;background:#272012}
-.card.error{border-color:#a53b43;background:#2a171a}
+:root{--bg:#24415f;--panel:#10243a;--panel2:#0b1b2d;--line:#3f6487;--text:#f4f8fc;--muted:#b8c9d9;--ok:#32d6a0;--warn:#ffc04d;--bad:#ff6b7d}
+html,body{margin:0;padding:0;background:linear-gradient(180deg,#2b4d70 0%,var(--bg) 46%,#203b57 100%);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}
+body{min-width:280px;min-height:100vh}
+header{position:sticky;top:0;z-index:10;padding:5px 4px 4px;background:#183653f2;border-bottom:1px solid #5d7f9d;box-shadow:0 5px 14px #0a172666;backdrop-filter:blur(8px)}
+.header-line{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:27px;padding:0 2px}
+h1{margin:0;font-size:15px;line-height:1;font-weight:900;letter-spacing:-.45px}
+.summary{display:flex;align-items:center;gap:3px}
+.summary-chip{display:flex;align-items:center;gap:3px;height:23px;padding:0 6px;border:1px solid #527493;border-radius:7px;background:#0c2236;box-shadow:inset 0 1px 0 #ffffff12;font-size:9px;color:var(--muted);white-space:nowrap}
+.summary-chip b{font-size:12px;color:#fff}.summary-chip.warn b{color:var(--warn)}.summary-chip.bad b{color:var(--bad)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px 3px 8px}
+.card{position:relative;min-width:0;min-height:92px;padding:8px 8px 7px 10px;border:1px solid #456685;border-radius:9px;background:linear-gradient(145deg,#17304a 0%,var(--panel2) 100%);box-shadow:0 7px 14px #07152180,inset 0 1px 0 #ffffff18;overflow:hidden}
+.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#6d8196}
+.card.online{border-color:#3d8a70}.card.online:before{background:var(--ok)}
+.card.warn{border-color:#a67b2b}.card.warn:before{background:var(--warn)}
+.card.error{border-color:#ad4d5b}.card.error:before{background:var(--bad)}
 .top{display:flex;align-items:center;justify-content:space-between;gap:4px}
-.name{min-width:0;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dot{width:7px;height:7px;border-radius:50%;background:#6b7280;flex:none}
-.online .dot{background:#34d399}.warn .dot{background:#fbbf24}.error .dot{background:#fb7185}
-.printer{margin-top:5px;font-size:10px;color:#aeb8c7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.status{margin-top:6px;font-size:12px;font-weight:800}
-.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:6px}
-.count{padding:3px 1px;border-radius:4px;background:#0c121b;text-align:center}
-.count b{display:block;font-size:12px;line-height:1.05}.count span{display:block;margin-top:2px;font-size:8px;color:#8994a5}
+.name{min-width:0;font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:8px;height:8px;border-radius:50%;background:#8291a0;box-shadow:0 0 7px #8291a088;flex:none}
+.online .dot{background:var(--ok);box-shadow:0 0 8px #32d6a099}.warn .dot{background:var(--warn);box-shadow:0 0 8px #ffc04d99}.error .dot{background:var(--bad);box-shadow:0 0 8px #ff6b7d99}
+.printer{margin-top:5px;font-size:11px;color:#c5d2df;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status{margin-top:5px;font-size:13px;font-weight:900}
+.online .status{color:var(--ok)}.warn .status{color:var(--warn)}.error .status{color:var(--bad)}
+.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px}
+.count{padding:4px 1px 3px;border:1px solid #27435d;border-radius:5px;background:#091827cc;text-align:center;box-shadow:inset 0 1px 0 #ffffff0b}
+.count b{display:block;font-size:13px;line-height:1.05}.count span{display:block;margin-top:2px;font-size:9px;color:#9fb1c2}
+@media(max-width:340px){h1{font-size:14px}.summary-chip{padding:0 4px}.summary-chip span{display:none}.grid{gap:4px;padding-left:2px;padding-right:2px}.card{padding-left:8px;padding-right:6px}}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:900px;margin:auto}}
 </style>
 </head>
 <body>
-<header><h1>I-PRINT 프린터 관제</h1></header>
+<header>
+  <div class="header-line">
+    <h1>I-PRINT 숭실대</h1>
+    <div class="summary" aria-label="프린터 상태 요약">
+      <div class="summary-chip"><span>연결</span><b id="onlineCount">0</b></div>
+      <div class="summary-chip warn"><span>대기</span><b id="queuedCount">0</b></div>
+      <div class="summary-chip bad"><span>오류</span><b id="errorCount">0</b></div>
+    </div>
+  </div>
+</header>
 <main class="grid" id="grid"></main>
 <script>
 const names=['5800X','Mac mini','학생회관 01','학생회관 02','학생회관 03','학생회관 04','학생회관 05','학생회관 06','베어드홀','숭덕경상관','문화관','미래관','형남공학관','교육관','백마관','한경직기념관','벤처중소기업센터','신양관','진리관','중앙도서관','연구관','창신관','Residence Hall','전산관','정보과학관','웨스트민스터홀','창의관'];
 const devices=names.map((name,i)=>({name,printer:i<2?'상태 확인 중':'미연결',online:false,printing:0,queued:0,error:0}));
 function tone(d){if(d.error>0)return'error';if(d.queued>0||d.printing>0)return'warn';return d.online?'online':''}
 function label(d){if(!d.online)return'연결 끊김';if(d.error>0)return'오류';if(d.printing>0)return'출력 중';if(d.queued>0)return'대기 있음';return'정상'}
-function render(){document.getElementById('grid').innerHTML=devices.map(d=>`<article class="card ${tone(d)}"><div class="top"><div class="name">${d.name}</div><span class="dot"></span></div><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div></article>`).join('')}
+function render(){
+  document.getElementById('grid').innerHTML=devices.map(d=>`<article class="card ${tone(d)}"><div class="top"><div class="name">${d.name}</div><span class="dot"></span></div><div class="printer">${d.printer}</div><div class="status">${label(d)}</div><div class="counts"><div class="count"><b>${d.printing}</b><span>출력</span></div><div class="count"><b>${d.queued}</b><span>대기</span></div><div class="count"><b>${d.error}</b><span>오류</span></div></div></article>`).join('');
+  document.getElementById('onlineCount').textContent=devices.filter(d=>d.online).length;
+  document.getElementById('queuedCount').textContent=devices.reduce((sum,d)=>sum+d.queued,0);
+  document.getElementById('errorCount').textContent=devices.reduce((sum,d)=>sum+d.error,0);
+}
 async function update(index,url){try{const r=await fetch(url,{cache:'no-store'});const d=await r.json();devices[index].online=!!d.agent_reachable;devices[index].printer=d.printer_name||'프린터 없음';devices[index].printing=Number(d.printing||0);devices[index].queued=Number(d.queued||0);devices[index].error=Number(d.error||0)}catch(e){devices[index].online=false;devices[index].printer='응답 없음'}render()}
 function refresh(){update(0,'/api/devices/5800x/status');update(1,'/api/devices/macmini/status')}
 render();refresh();setInterval(refresh,5000);
