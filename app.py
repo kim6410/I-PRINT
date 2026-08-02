@@ -494,6 +494,221 @@ def initialize_database() -> None:
                 """,
                 seed_devices,
             )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_contacts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                telegram_chat_id TEXT NOT NULL DEFAULT '',
+                phone TEXT NOT NULL DEFAULT '',
+                description TEXT NOT NULL DEFAULT '',
+                shift_label TEXT NOT NULL DEFAULT '',
+                start_time TEXT NOT NULL DEFAULT '09:00',
+                end_time TEXT NOT NULL DEFAULT '18:00',
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_locations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                address TEXT NOT NULL DEFAULT '',
+                description TEXT NOT NULL DEFAULT '',
+                pc_count INTEGER NOT NULL DEFAULT 0,
+                printer_count INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT '운영 중',
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_types (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                type_key TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                severity TEXT NOT NULL DEFAULT '일반',
+                default_repeat_minutes INTEGER NOT NULL DEFAULT 5,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_time_groups (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                start_time TEXT NOT NULL DEFAULT '00:00',
+                end_time TEXT NOT NULL DEFAULT '23:59',
+                days_json TEXT NOT NULL DEFAULT '[0,1,2,3,4,5,6]',
+                default_repeat_minutes INTEGER NOT NULL DEFAULT 5,
+                priority TEXT NOT NULL DEFAULT '일반',
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_policies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                location_id INTEGER,
+                target_kind TEXT NOT NULL DEFAULT 'all',
+                target_value TEXT NOT NULL DEFAULT '',
+                time_group_id INTEGER,
+                repeat_minutes INTEGER NOT NULL DEFAULT 5,
+                min_duration_minutes INTEGER NOT NULL DEFAULT 0,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(location_id) REFERENCES alert_locations(id),
+                FOREIGN KEY(time_group_id) REFERENCES alert_time_groups(id)
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_policy_contacts (
+                policy_id INTEGER NOT NULL,
+                contact_id INTEGER NOT NULL,
+                PRIMARY KEY(policy_id, contact_id),
+                FOREIGN KEY(policy_id) REFERENCES alert_policies(id) ON DELETE CASCADE,
+                FOREIGN KEY(contact_id) REFERENCES alert_contacts(id) ON DELETE CASCADE
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_policy_types (
+                policy_id INTEGER NOT NULL,
+                type_id INTEGER NOT NULL,
+                PRIMARY KEY(policy_id, type_id),
+                FOREIGN KEY(policy_id) REFERENCES alert_policies(id) ON DELETE CASCADE,
+                FOREIGN KEY(type_id) REFERENCES alert_types(id) ON DELETE CASCADE
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS alert_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                occurred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                recovered_at TEXT,
+                acknowledged_at TEXT,
+                acknowledged_by TEXT NOT NULL DEFAULT '',
+                location_name TEXT NOT NULL DEFAULT '',
+                device_name TEXT NOT NULL DEFAULT '',
+                printer_name TEXT NOT NULL DEFAULT '',
+                alert_type TEXT NOT NULL DEFAULT '',
+                message TEXT NOT NULL DEFAULT '',
+                recipients TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT '발생',
+                send_count INTEGER NOT NULL DEFAULT 0,
+                last_sent_at TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        for index_sql in (
+            "CREATE INDEX IF NOT EXISTS idx_alert_policies_enabled ON alert_policies(enabled)",
+            "CREATE INDEX IF NOT EXISTS idx_alert_history_occurred ON alert_history(occurred_at DESC)",
+            "CREATE INDEX IF NOT EXISTS idx_alert_history_status ON alert_history(status)",
+        ):
+            connection.execute(index_sql)
+
+        if connection.execute("SELECT COUNT(*) FROM alert_contacts").fetchone()[0] == 0:
+            existing_chat_ids = _parse_chat_ids(os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS", ""))
+            primary_chat = existing_chat_ids[0] if existing_chat_ids else ""
+            connection.executemany(
+                "INSERT INTO alert_contacts (name, telegram_chat_id, description, shift_label, start_time, end_time, enabled) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [
+                    ("담당자 1", primary_chat, "주간 프린터 장애와 대기열 지연 담당", "주간", "09:00", "18:00", 1),
+                    ("담당자 2", "", "야간 및 장시간 지속 장애 담당", "야간", "18:00", "09:00", 1),
+                ],
+            )
+        if connection.execute("SELECT COUNT(*) FROM alert_locations").fetchone()[0] == 0:
+            connection.executemany(
+                "INSERT INTO alert_locations (name, address, description, pc_count, printer_count, status, enabled) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [
+                    ("숭실대학교", "서울 동작구 상도로 369", "학생회관 및 교내 출력 장비 그룹", 10, 10, "운영 중", 1),
+                    ("본사 사무실", "", "관리자 PC와 내부 테스트 프린터", 1, 1, "운영 중", 1),
+                    ("개발 테스트실", "", "5800X와 Mac mini 실데이터 검증 그룹", 2, 0, "테스트", 1),
+                ],
+            )
+        if connection.execute("SELECT COUNT(*) FROM alert_types").fetchone()[0] == 0:
+            connection.executemany(
+                "INSERT INTO alert_types (type_key, name, description, severity, default_repeat_minutes, enabled) VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                    ("pc_offline", "PC 오프라인", "에이전트와 PC 상태가 모두 응답하지 않음", "긴급", 1, 1),
+                    ("printer_offline", "프린터 오프라인", "프린터 연결 또는 스풀러 상태 이상", "긴급", 1, 1),
+                    ("queue_delay", "대기열 3분 초과", "실제 출력 작업이 지정 시간 이상 멈춤", "주의", 1, 1),
+                    ("tailscale_offline", "Tailscale 연결 끊김", "원격망 연결 상태가 오프라인으로 변경", "주의", 5, 1),
+                    ("toner_low", "토너 부족", "소모품 잔량 임계치 미만", "일반", 30, 0),
+                    ("paper_empty", "용지 없음", "프린터 용지함 상태 감지", "일반", 10, 0),
+                    ("agent_unreachable", "에이전트 미응답", "원격 에이전트 API가 응답하지 않음", "긴급", 1, 1),
+                ],
+            )
+        if connection.execute("SELECT COUNT(*) FROM alert_time_groups").fetchone()[0] == 0:
+            connection.executemany(
+                "INSERT INTO alert_time_groups (name, description, start_time, end_time, days_json, default_repeat_minutes, priority, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    ("평일 업무시간", "월요일~금요일 기본 근무 시간", "09:00", "18:00", "[0,1,2,3,4]", 1, "높음", 1),
+                    ("야간 시간", "야간 긴급 장애 감시", "18:00", "09:00", "[0,1,2,3,4,5,6]", 5, "긴급", 1),
+                    ("주말", "토요일·일요일 전일 감시", "00:00", "23:59", "[5,6]", 5, "높음", 1),
+                    ("24시간", "중단 없이 항상 감시", "00:00", "23:59", "[0,1,2,3,4,5,6]", 1, "최상", 1),
+                ],
+            )
+        if connection.execute("SELECT COUNT(*) FROM alert_policies").fetchone()[0] == 0:
+            locations = {row["name"]: row["id"] for row in connection.execute("SELECT id, name FROM alert_locations")}
+            times = {row["name"]: row["id"] for row in connection.execute("SELECT id, name FROM alert_time_groups")}
+            policies = [
+                ("숭실대 프린터 오프라인", "프린터 또는 에이전트 미응답 즉시 감지", locations.get("숭실대학교"), "location", "숭실대학교 전체", times.get("24시간"), 1, 0, 1),
+                ("대기열 3분 초과", "실제 출력 작업만 감시 · 샘플 데이터 제외", None, "all", "전체 PC", times.get("평일 업무시간"), 1, 3, 1),
+                ("야간 긴급 장애", "10분 이상 지속되는 오프라인만 발송", None, "all", "전체 지점", times.get("야간 시간"), 5, 10, 1),
+                ("토너·용지 주의", "소모품 부족과 용지 없음 상태를 묶어 알림", locations.get("숭실대학교"), "device_group", "숭실대 01~06", times.get("평일 업무시간"), 30, 0, 1),
+                ("테스트실 개발 알림", "개발 장비 상태 변경 확인용", locations.get("개발 테스트실"), "device_group", "5800X · Mac mini", times.get("24시간"), 10, 0, 0),
+            ]
+            connection.executemany(
+                "INSERT INTO alert_policies (name, description, location_id, target_kind, target_value, time_group_id, repeat_minutes, min_duration_minutes, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                policies,
+            )
+            contact_ids = {row["name"]: row["id"] for row in connection.execute("SELECT id, name FROM alert_contacts")}
+            policy_ids = {row["name"]: row["id"] for row in connection.execute("SELECT id, name FROM alert_policies")}
+            type_ids = {row["type_key"]: row["id"] for row in connection.execute("SELECT id, type_key FROM alert_types")}
+            contact_links = [
+                (policy_ids["숭실대 프린터 오프라인"], contact_ids["담당자 1"]),
+                (policy_ids["숭실대 프린터 오프라인"], contact_ids["담당자 2"]),
+                (policy_ids["대기열 3분 초과"], contact_ids["담당자 1"]),
+                (policy_ids["야간 긴급 장애"], contact_ids["담당자 2"]),
+                (policy_ids["토너·용지 주의"], contact_ids["담당자 1"]),
+                (policy_ids["테스트실 개발 알림"], contact_ids["담당자 2"]),
+            ]
+            connection.executemany("INSERT OR IGNORE INTO alert_policy_contacts (policy_id, contact_id) VALUES (?, ?)", contact_links)
+            type_links = [
+                (policy_ids["숭실대 프린터 오프라인"], type_ids["printer_offline"]),
+                (policy_ids["숭실대 프린터 오프라인"], type_ids["agent_unreachable"]),
+                (policy_ids["대기열 3분 초과"], type_ids["queue_delay"]),
+                (policy_ids["야간 긴급 장애"], type_ids["pc_offline"]),
+                (policy_ids["야간 긴급 장애"], type_ids["printer_offline"]),
+                (policy_ids["토너·용지 주의"], type_ids["toner_low"]),
+                (policy_ids["토너·용지 주의"], type_ids["paper_empty"]),
+                (policy_ids["테스트실 개발 알림"], type_ids["pc_offline"]),
+                (policy_ids["테스트실 개발 알림"], type_ids["tailscale_offline"]),
+            ]
+            connection.executemany("INSERT OR IGNORE INTO alert_policy_types (policy_id, type_id) VALUES (?, ?)", type_links)
         connection.commit()
 
 
@@ -810,6 +1025,108 @@ def get_macmini_status() -> dict[str, Any]:
             "agent_reachable": False,
             "error_message": str(error),
         }
+
+
+def _rows(table: str) -> list[dict[str, Any]]:
+    with get_connection() as connection:
+        return [dict(row) for row in connection.execute(f"SELECT * FROM {table} ORDER BY id")]
+
+
+def _policy_payload() -> list[dict[str, Any]]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT p.*, l.name AS location_name, t.name AS time_group_name,
+                   COALESCE(GROUP_CONCAT(DISTINCT c.name), '') AS contact_names,
+                   COALESCE(GROUP_CONCAT(DISTINCT ty.name), '') AS type_names
+            FROM alert_policies p
+            LEFT JOIN alert_locations l ON l.id = p.location_id
+            LEFT JOIN alert_time_groups t ON t.id = p.time_group_id
+            LEFT JOIN alert_policy_contacts pc ON pc.policy_id = p.id
+            LEFT JOIN alert_contacts c ON c.id = pc.contact_id
+            LEFT JOIN alert_policy_types pt ON pt.policy_id = p.id
+            LEFT JOIN alert_types ty ON ty.id = pt.type_id
+            GROUP BY p.id
+            ORDER BY p.id
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
+@app.get("/api/settings")
+def get_alert_settings() -> dict[str, Any]:
+    with get_connection() as connection:
+        summary = {
+            "active_policies": connection.execute("SELECT COUNT(*) FROM alert_policies WHERE enabled = 1").fetchone()[0],
+            "total_policies": connection.execute("SELECT COUNT(*) FROM alert_policies").fetchone()[0],
+            "active_contacts": connection.execute("SELECT COUNT(*) FROM alert_contacts WHERE enabled = 1").fetchone()[0],
+            "total_contacts": connection.execute("SELECT COUNT(*) FROM alert_contacts").fetchone()[0],
+            "active_locations": connection.execute("SELECT COUNT(*) FROM alert_locations WHERE enabled = 1").fetchone()[0],
+            "unacknowledged": connection.execute("SELECT COUNT(*) FROM alert_history WHERE acknowledged_at IS NULL AND status != '복구'").fetchone()[0],
+        }
+    return {
+        "summary": summary,
+        "policies": _policy_payload(),
+        "contacts": _rows("alert_contacts"),
+        "locations": _rows("alert_locations"),
+        "types": _rows("alert_types"),
+        "time_groups": _rows("alert_time_groups"),
+        "history": list(reversed(_rows("alert_history")))[:100],
+    }
+
+
+SETTINGS_TABLES = {
+    "policies": "alert_policies",
+    "contacts": "alert_contacts",
+    "locations": "alert_locations",
+    "types": "alert_types",
+    "time-groups": "alert_time_groups",
+}
+
+
+@app.patch("/api/settings/{entity}/{item_id}/toggle")
+async def toggle_alert_setting(entity: str, item_id: int, request: Request) -> dict[str, Any]:
+    table = SETTINGS_TABLES.get(entity)
+    if not table:
+        return JSONResponse({"ok": False, "detail": "지원하지 않는 설정 항목입니다."}, status_code=404)
+    payload = await request.json()
+    enabled = 1 if bool(payload.get("enabled")) else 0
+    with get_connection() as connection:
+        cursor = connection.execute(
+            f"UPDATE {table} SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (enabled, item_id),
+        )
+        connection.commit()
+    if cursor.rowcount == 0:
+        return JSONResponse({"ok": False, "detail": "설정 항목을 찾지 못했습니다."}, status_code=404)
+    return {"ok": True, "enabled": bool(enabled)}
+
+
+@app.patch("/api/settings/types/{item_id}")
+async def update_alert_type(item_id: int, request: Request) -> dict[str, Any]:
+    payload = await request.json()
+    repeat = max(1, min(1440, int(payload.get("default_repeat_minutes", 5))))
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE alert_types SET default_repeat_minutes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (repeat, item_id),
+        )
+        connection.commit()
+    return {"ok": True, "default_repeat_minutes": repeat}
+
+
+@app.patch("/api/settings/time-groups/{item_id}")
+async def update_time_group(item_id: int, request: Request) -> dict[str, Any]:
+    payload = await request.json()
+    start_time = str(payload.get("start_time", "00:00"))[:5]
+    end_time = str(payload.get("end_time", "23:59"))[:5]
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE alert_time_groups SET start_time = ?, end_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (start_time, end_time, item_id),
+        )
+        connection.commit()
+    return {"ok": True, "start_time": start_time, "end_time": end_time}
 
 
 @app.get("/health")
