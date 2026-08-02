@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "printer_jobs.db"
 INDEX_PATH = BASE_DIR / "index.html"
+SETTINGS_PATH = BASE_DIR / "settings.html"
 MOBILE_PATH = BASE_DIR / "mobile.html"
 LOGIN_PATH = BASE_DIR / "login.html"
 ASSETS_PATH = BASE_DIR / "assets"
@@ -563,6 +564,11 @@ async def dashboard(request: Request):
         return RedirectResponse(url="/mobile", status_code=302)
 
     return FileResponse(INDEX_PATH)
+
+
+@app.get("/settings")
+def settings_page() -> FileResponse:
+    return FileResponse(SETTINGS_PATH)
 
 
 @app.get("/mobile")
