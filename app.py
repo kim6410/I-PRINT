@@ -10,6 +10,7 @@ import re
 import sqlite3
 import threading
 import time
+from datetime import datetime
 import urllib.parse
 import urllib.error
 import urllib.request
@@ -228,6 +229,8 @@ def _build_printer_queue_message(items: list[dict[str, Any]], longest_wait: floa
 
 
 def _check_printer_queue_and_notify(state: dict[str, bool]) -> None:
+    if not _alert_type_is_scheduled("queue_delay"):
+        return
     queue_items: list[dict[str, Any]] = []
     with get_connection() as connection:
         rows = connection.execute(
@@ -305,6 +308,15 @@ def _check_device_and_notify(device_key: str, device_name: str, status_url: str,
         }
         error_message = str(error)
         online = False
+
+    if not payload.get("agent_reachable"):
+        alert_type_key = "agent_unreachable"
+    elif str(payload.get("tailscale_status", "")).lower() != "online":
+        alert_type_key = "tailscale_offline"
+    else:
+        alert_type_key = "pc_offline"
+    if not _alert_type_is_scheduled(alert_type_key):
+        return
 
     previous = state.get(device_key)
     if previous is None:
@@ -559,6 +571,14 @@ def initialize_database() -> None:
             )
             """
         )
+        time_group_columns = {
+            row["name"] for row in connection.execute("PRAGMA table_info(alert_time_groups)")
+        }
+        if "start_date" not in time_group_columns:
+            connection.execute("ALTER TABLE alert_time_groups ADD COLUMN start_date TEXT NOT NULL DEFAULT ''")
+        if "end_date" not in time_group_columns:
+            connection.execute("ALTER TABLE alert_time_groups ADD COLUMN end_date TEXT NOT NULL DEFAULT ''")
+
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS alert_policies (
@@ -605,6 +625,7 @@ def initialize_database() -> None:
             """
             CREATE TABLE IF NOT EXISTS alert_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                policy_id INTEGER,
                 occurred_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 recovered_at TEXT,
                 acknowledged_at TEXT,
@@ -622,6 +643,12 @@ def initialize_database() -> None:
             )
             """
         )
+        history_columns = {
+            row["name"] for row in connection.execute("PRAGMA table_info(alert_history)")
+        }
+        if "policy_id" not in history_columns:
+            connection.execute("ALTER TABLE alert_history ADD COLUMN policy_id INTEGER")
+
         for index_sql in (
             "CREATE INDEX IF NOT EXISTS idx_alert_policies_enabled ON alert_policies(enabled)",
             "CREATE INDEX IF NOT EXISTS idx_alert_history_occurred ON alert_history(occurred_at DESC)",
@@ -1120,13 +1147,140 @@ async def update_time_group(item_id: int, request: Request) -> dict[str, Any]:
     payload = await request.json()
     start_time = str(payload.get("start_time", "00:00"))[:5]
     end_time = str(payload.get("end_time", "23:59"))[:5]
+    start_date = str(payload.get("start_date", ""))[:10]
+    end_date = str(payload.get("end_date", ""))[:10]
+    raw_days = payload.get("days", list(range(7)))
+    days = sorted({int(day) for day in raw_days if str(day).isdigit() and 0 <= int(day) <= 6})
+    if not days:
+        days = list(range(7))
+    days_json = json.dumps(days, ensure_ascii=False)
     with get_connection() as connection:
         connection.execute(
-            "UPDATE alert_time_groups SET start_time = ?, end_time = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (start_time, end_time, item_id),
+            """
+            UPDATE alert_time_groups
+            SET start_time = ?, end_time = ?, start_date = ?, end_date = ?,
+                days_json = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (start_time, end_time, start_date, end_date, days_json, item_id),
         )
         connection.commit()
-    return {"ok": True, "start_time": start_time, "end_time": end_time}
+    return {
+        "ok": True,
+        "start_time": start_time,
+        "end_time": end_time,
+        "start_date": start_date,
+        "end_date": end_date,
+        "days": days,
+    }
+
+
+def _time_group_is_active(row: sqlite3.Row, now: datetime) -> bool:
+    if not bool(row["enabled"]):
+        return False
+    today = now.date().isoformat()
+    start_date = str(row["start_date"] or "")
+    end_date = str(row["end_date"] or "")
+    if start_date and today < start_date:
+        return False
+    if end_date and today > end_date:
+        return False
+    try:
+        days = {int(day) for day in json.loads(row["days_json"] or "[]")}
+    except (TypeError, ValueError, json.JSONDecodeError):
+        days = set(range(7))
+    if days and now.weekday() not in days:
+        return False
+    current = now.strftime("%H:%M")
+    start_time = str(row["start_time"] or "00:00")[:5]
+    end_time = str(row["end_time"] or "23:59")[:5]
+    if start_time <= end_time:
+        return start_time <= current <= end_time
+    return current >= start_time or current <= end_time
+
+
+def _alert_type_is_scheduled(type_key: str, now: datetime | None = None) -> bool:
+    current = now or datetime.now()
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT tg.*
+            FROM alert_policies p
+            JOIN alert_policy_types pt ON pt.policy_id = p.id
+            JOIN alert_types ty ON ty.id = pt.type_id
+            JOIN alert_time_groups tg ON tg.id = p.time_group_id
+            WHERE p.enabled = 1 AND ty.enabled = 1 AND ty.type_key = ?
+            ORDER BY p.id
+            """,
+            (type_key,),
+        ).fetchall()
+    return any(_time_group_is_active(row, current) for row in rows)
+
+
+@app.post("/api/settings/test-alert")
+def create_test_alert() -> dict[str, Any]:
+    with get_connection() as connection:
+        policies = connection.execute(
+            """
+            SELECT p.id, p.name, p.repeat_minutes,
+                   COALESCE(l.name, '테스트 위치') AS location_name,
+                   COALESCE(GROUP_CONCAT(DISTINCT c.name), '담당자 미배정') AS recipients,
+                   t.enabled, t.start_time, t.end_time, t.days_json,
+                   t.start_date, t.end_date
+            FROM alert_policies p
+            LEFT JOIN alert_locations l ON l.id = p.location_id
+            LEFT JOIN alert_time_groups t ON t.id = p.time_group_id
+            LEFT JOIN alert_policy_contacts pc ON pc.policy_id = p.id
+            LEFT JOIN alert_contacts c ON c.id = pc.contact_id AND c.enabled = 1
+            WHERE p.enabled = 1
+            GROUP BY p.id
+            ORDER BY p.id
+            """
+        ).fetchall()
+        now = datetime.now()
+        policy = next((row for row in policies if _time_group_is_active(row, now)), None)
+        if policy is None:
+            return JSONResponse(
+                {"ok": False, "detail": "현재 날짜·요일·시간대에 활성화된 알림 정책이 없습니다."},
+                status_code=400,
+            )
+
+        message = (
+            "[I-PRINT 테스트 장애]\n"
+            f"정책: {policy['name']}\n"
+            f"위치: {policy['location_name']}\n"
+            "대상: TEST-PC / TEST-PRINTER\n"
+            f"담당자: {policy['recipients']}\n"
+            f"재알림 설정: {policy['repeat_minutes']}분\n"
+            "상태: DB·화면·텔레그램 연결 시험"
+        )
+        sent = _send_telegram_message(message)
+        cursor = connection.execute(
+            """
+            INSERT INTO alert_history (
+                policy_id, location_name, device_name, printer_name,
+                alert_type, message, recipients, status, send_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                policy["id"],
+                policy["location_name"],
+                "TEST-PC",
+                "TEST-PRINTER",
+                "테스트 장애",
+                message,
+                policy["recipients"],
+                "발생",
+                1 if sent else 0,
+            ),
+        )
+        connection.commit()
+        return {
+            "ok": True,
+            "history_id": cursor.lastrowid,
+            "telegram_sent": sent,
+            "policy": policy["name"],
+        }
 
 
 @app.get("/health")
