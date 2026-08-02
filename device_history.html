@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>I-PRINT 장비 히스토리</title>
+  <style>
+    :root{--bg:#06111f;--panel:#0b1b2d;--line:#23415f;--text:#eff7ff;--muted:#8ea6bf;--blue:#68b7ff;--mint:#4ee0b3;--warn:#ffc45d;--bad:#ff7285}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 82% 0,#183d62 0,transparent 35%),linear-gradient(180deg,#08192b,#05101d 58%,#07111f);color:var(--text);font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}.page{max-width:1500px;margin:auto;padding:26px}.topbar{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:25px 28px;border:1px solid rgba(92,145,196,.46);border-radius:25px;background:linear-gradient(135deg,rgba(16,45,75,.96),rgba(8,26,45,.95));box-shadow:0 24px 70px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.08)}.eyebrow{color:#8fd6ff;font-size:12px;font-weight:900;letter-spacing:.13em}.topbar h1{margin:8px 0 6px;font-size:34px}.topbar p{margin:0;color:#a9bdd3}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border:1px solid #355a7e;border-radius:13px;background:#143452;color:#eef7ff;text-decoration:none;font-weight:850;cursor:pointer}.btn.primary{background:linear-gradient(135deg,#1e7dc1,#1b9d85);border-color:#63d8c0}.toolbar{display:grid;grid-template-columns:minmax(230px,1.2fr) minmax(180px,.75fr) auto auto;gap:10px;margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:18px;background:rgba(9,24,41,.9)}input,select{width:100%;min-height:44px;border:1px solid #31516f;border-radius:11px;background:#0a1a2d;color:white;padding:0 13px;font:inherit}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:18px}.summary-card{padding:17px 19px;border:1px solid var(--line);border-radius:17px;background:rgba(10,27,45,.88)}.summary-card span{color:var(--muted);font-size:12px}.summary-card strong{display:block;margin-top:7px;font-size:24px}.tablebox{overflow:auto;border:1px solid var(--line);border-radius:20px;background:rgba(9,24,41,.92);box-shadow:0 18px 42px rgba(0,0,0,.28)}table{width:100%;border-collapse:collapse;min-width:1260px}th,td{padding:13px 12px;border-bottom:1px solid #1d3852;text-align:left;font-size:12px;white-space:nowrap}th{position:sticky;top:0;background:#102b46;color:#8fb0cf;z-index:1}.ok{color:var(--mint);font-weight:850}.warn{color:var(--warn);font-weight:850}.bad{color:var(--bad);font-weight:850}.empty{text-align:center;color:var(--muted);padding:42px}.meta{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:14px 2px;color:var(--muted);font-size:13px}.pagination{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:17px}.page-btn{min-width:40px;min-height:38px;border:1px solid #355a7e;border-radius:10px;background:#102b46;color:white;cursor:pointer}.page-btn.active{background:#287bc0;border-color:#7bc8ff}.page-btn:disabled{opacity:.35;cursor:not-allowed}.filter-badge{display:inline-flex;align-items:center;padding:7px 10px;border-radius:99px;background:#153f38;color:#a7f5de;font-size:12px;font-weight:850}.note{margin-top:17px;padding:15px 17px;border:1px dashed #3a648a;border-radius:14px;background:#0a1a2d;color:#9cb4cb;line-height:1.65;font-size:12px}@media(max-width:850px){.page{padding:14px}.topbar{padding:20px;flex-direction:column}.topbar h1{font-size:27px}.toolbar{grid-template-columns:1fr 1fr}.toolbar .btn{width:100%}.summary{grid-template-columns:1fr 1fr}}@media(max-width:560px){.toolbar{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div><div class="eyebrow">I-PRINT DEVICE HISTORY</div><h1 id="pageTitle">장비 히스토리</h1><p>장비 상태 변화와 정기 상태 수집 기록을 검색하고 확인합니다.</p></div>
+    <div class="actions"><a class="btn" href="/?view=pc">관제 화면으로</a><a class="btn" href="/settings">설정 화면</a></div>
+  </header>
+
+  <form class="toolbar" id="searchForm">
+    <input id="searchInput" placeholder="장비명, 상태, 프린터, 오류 내용 검색">
+    <select id="deviceSelect"><option value="">전체 장비</option></select>
+    <button class="btn primary" type="submit">검색</button>
+    <button class="btn" type="button" id="showAll">전체 장비 보기</button>
+  </form>
+
+  <section class="summary">
+    <div class="summary-card"><span>현재 필터</span><strong id="filterName">전체 장비</strong></div>
+    <div class="summary-card"><span>검색 결과</span><strong id="totalCount">0</strong></div>
+    <div class="summary-card"><span>페이지당 표시</span><strong>15</strong></div>
+    <div class="summary-card"><span>현재 페이지</span><strong id="pageNumber">1 / 1</strong></div>
+  </section>
+
+  <div class="meta"><span id="resultMeta">조회 중...</span><span class="filter-badge" id="filterBadge">전체 장비</span></div>
+  <section class="tablebox">
+    <table>
+      <thead><tr><th>수집 시각</th><th>장비</th><th>위치</th><th>PC</th><th>Tailscale</th><th>CPU</th><th>온도</th><th>메모리</th><th>디스크</th><th>프린터</th><th>스풀러</th><th>출력</th><th>대기</th><th>오류</th><th>상세</th></tr></thead>
+      <tbody id="historyRows"><tr><td colspan="15" class="empty">데이터를 불러오는 중입니다.</td></tr></tbody>
+    </table>
+  </section>
+  <div class="pagination" id="pagination"></div>
+  <div class="note">실제 연결 장비의 상태만 누적합니다. 상태가 바뀌면 즉시 저장하고, 변화가 없을 때는 5분 간격으로 저장하여 DB가 불필요하게 커지는 것을 줄였습니다.</div>
+</div>
+<script>
+const params=new URLSearchParams(location.search);let currentPage=Math.max(1,Number(params.get('page')||1));let currentDevice=params.get('device_id')||'';let currentSearch=params.get('search')||'';
+const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function tone(value){return value==='Online'||value==='Running'?'ok':value==='Offline'||value==='Unavailable'?'bad':'warn'}
+function number(value,suffix='%'){return value===null||value===undefined||value===''?'N/A':`${Math.round(Number(value))}${suffix}`}
+async function loadHistory(){
+  const query=new URLSearchParams({page:String(currentPage)});if(currentDevice)query.set('device_id',currentDevice);if(currentSearch)query.set('search',currentSearch);
+  const response=await fetch(`/api/device-history?${query}`,{cache:'no-store'});const data=await response.json();if(!response.ok)throw new Error(data.detail||'조회 실패');
+  currentPage=data.page;render(data);history.replaceState(null,'',`/history?${query}`);
+}
+function render(data){
+  const select=document.getElementById('deviceSelect');select.innerHTML='<option value="">전체 장비</option>'+data.devices.map(d=>`<option value="${d.id}" ${String(d.id)===String(currentDevice)?'selected':''}>${esc(d.display_name)}</option>`).join('');
+  const selected=data.devices.find(d=>String(d.id)===String(currentDevice));const label=selected?.display_name||'전체 장비';document.getElementById('pageTitle').textContent=selected?`${label} 히스토리`:'전체 장비 히스토리';document.getElementById('filterName').textContent=label;document.getElementById('filterBadge').textContent=label;document.getElementById('totalCount').textContent=data.total;document.getElementById('pageNumber').textContent=`${data.page} / ${data.total_pages}`;document.getElementById('resultMeta').textContent=`총 ${data.total}건 · ${data.page}페이지`;document.getElementById('searchInput').value=currentSearch;
+  document.getElementById('historyRows').innerHTML=data.items.length?data.items.map(row=>`<tr><td>${esc(row.collected_at)}</td><td><b>${esc(row.device_name)}</b></td><td>${esc(row.location||'-')}</td><td class="${tone(row.pc_status)}">${esc(row.pc_status)}</td><td class="${tone(row.tailscale_status)}">${esc(row.tailscale_status)}</td><td>${number(row.cpu_percent)}</td><td>${number(row.temperature_c,'℃')}</td><td>${number(row.memory_percent)}</td><td>${number(row.disk_percent)}</td><td>${esc(row.printer_name||'-')}</td><td class="${tone(row.spooler_status)}">${esc(row.spooler_status||'-')}</td><td>${row.printing_count}</td><td>${row.queued_count}</td><td class="${row.error_count?'bad':''}">${row.error_count}</td><td title="${esc(row.details)}">${esc(row.details||'-')}</td></tr>`).join(''):'<tr><td colspan="15" class="empty">해당 조건의 장비 히스토리가 없습니다.</td></tr>';
+  renderPagination(data.page,data.total_pages);
+}
+function renderPagination(page,total){const target=document.getElementById('pagination');const buttons=[];buttons.push(`<button class="page-btn" ${page<=1?'disabled':''} onclick="goPage(${page-1})">이전</button>`);const start=Math.max(1,page-3),end=Math.min(total,start+6);for(let n=start;n<=end;n++)buttons.push(`<button class="page-btn ${n===page?'active':''}" onclick="goPage(${n})">${n}</button>`);buttons.push(`<button class="page-btn" ${page>=total?'disabled':''} onclick="goPage(${page+1})">다음</button>`);target.innerHTML=buttons.join('')}
+function goPage(page){currentPage=Math.max(1,page);loadHistory().catch(showError)}
+function showError(error){document.getElementById('historyRows').innerHTML=`<tr><td colspan="15" class="empty">${esc(error.message)}</td></tr>`}
+document.getElementById('searchForm').addEventListener('submit',event=>{event.preventDefault();currentSearch=document.getElementById('searchInput').value.trim();currentDevice=document.getElementById('deviceSelect').value;currentPage=1;loadHistory().catch(showError)});
+document.getElementById('deviceSelect').addEventListener('change',event=>{currentDevice=event.target.value;currentPage=1;loadHistory().catch(showError)});
+document.getElementById('showAll').addEventListener('click',()=>{currentDevice='';currentSearch='';currentPage=1;loadHistory().catch(showError)});
+loadHistory().catch(showError);
+</script>
+</body>
+</html>

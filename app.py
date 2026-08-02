@@ -25,6 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "printer_jobs.db"
 INDEX_PATH = BASE_DIR / "index.html"
 SETTINGS_PATH = BASE_DIR / "settings.html"
+HISTORY_PATH = BASE_DIR / "device_history.html"
 MOBILE_PATH = BASE_DIR / "mobile.html"
 LOGIN_PATH = BASE_DIR / "login.html"
 ASSETS_PATH = BASE_DIR / "assets"
@@ -466,6 +467,37 @@ def initialize_database() -> None:
             )
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS device_status_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                device_id INTEGER NOT NULL,
+                device_name TEXT NOT NULL,
+                status_key TEXT NOT NULL DEFAULT '',
+                collected_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                pc_status TEXT NOT NULL DEFAULT 'Unknown',
+                tailscale_status TEXT NOT NULL DEFAULT 'Unknown',
+                cpu_percent REAL,
+                temperature_c REAL,
+                memory_percent REAL,
+                disk_percent REAL,
+                printer_name TEXT NOT NULL DEFAULT '',
+                spooler_status TEXT NOT NULL DEFAULT '',
+                printing_count INTEGER NOT NULL DEFAULT 0,
+                queued_count INTEGER NOT NULL DEFAULT 0,
+                error_count INTEGER NOT NULL DEFAULT 0,
+                agent_reachable INTEGER NOT NULL DEFAULT 0,
+                details TEXT NOT NULL DEFAULT '',
+                FOREIGN KEY(device_id) REFERENCES managed_devices(id)
+            )
+            """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_device_status_history_device_time ON device_status_history(device_id, collected_at DESC)"
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_device_status_history_name_time ON device_status_history(device_name, collected_at DESC)"
+        )
         device_count = connection.execute("SELECT COUNT(*) FROM managed_devices").fetchone()[0]
         if device_count == 0:
             seed_devices = [
@@ -813,6 +845,11 @@ def settings_page() -> FileResponse:
     return FileResponse(SETTINGS_PATH)
 
 
+@app.get("/history")
+def device_history_page() -> FileResponse:
+    return FileResponse(HISTORY_PATH)
+
+
 @app.get("/mobile")
 def mobile_dashboard() -> FileResponse:
     return FileResponse(MOBILE_PATH)
@@ -995,15 +1032,144 @@ def list_printer_jobs(
     }
 
 
+@app.get("/api/device-history")
+def list_device_history(
+    page: int = Query(default=1, ge=1),
+    search: str = Query(default="", max_length=120),
+    device_id: int | None = Query(default=None, ge=1),
+) -> dict[str, Any]:
+    page_size = 15
+    search_text = search.strip()
+    conditions: list[str] = []
+    parameters: list[Any] = []
+    if device_id is not None:
+        conditions.append("h.device_id = ?")
+        parameters.append(device_id)
+    if search_text:
+        keyword = f"%{search_text}%"
+        conditions.append(
+            "("
+            "h.device_name LIKE ? OR h.pc_status LIKE ? OR h.tailscale_status LIKE ? OR "
+            "h.printer_name LIKE ? OR h.spooler_status LIKE ? OR h.details LIKE ?"
+            ")"
+        )
+        parameters.extend([keyword] * 6)
+    where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    with get_connection() as connection:
+        total = connection.execute(
+            f"SELECT COUNT(*) FROM device_status_history h {where_clause}",
+            parameters,
+        ).fetchone()[0]
+        total_pages = max(1, math.ceil(total / page_size))
+        current_page = min(page, total_pages)
+        offset = (current_page - 1) * page_size
+        rows = connection.execute(
+            f"""
+            SELECT h.*, d.location, d.computer_name, d.tailscale_ip
+            FROM device_status_history h
+            LEFT JOIN managed_devices d ON d.id = h.device_id
+            {where_clause}
+            ORDER BY h.collected_at DESC, h.id DESC
+            LIMIT ? OFFSET ?
+            """,
+            [*parameters, page_size, offset],
+        ).fetchall()
+        devices = connection.execute(
+            """
+            SELECT id, display_name, computer_name, location, status_key
+            FROM managed_devices
+            WHERE enabled = 1 AND status_key != ''
+            ORDER BY display_order, id
+            """
+        ).fetchall()
+    return {
+        "items": [dict(row) for row in rows],
+        "devices": [dict(row) for row in devices],
+        "page": current_page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": total_pages,
+        "search": search_text,
+        "device_id": device_id,
+    }
+
+
+def _record_device_status(status_key: str, device_name: str, payload: dict[str, Any]) -> None:
+    """상태가 변했거나 마지막 저장 후 5분이 지나면 실제 연결 장비 상태를 누적합니다."""
+    if not status_key:
+        return
+    with get_connection() as connection:
+        device = connection.execute(
+            "SELECT id, display_name FROM managed_devices WHERE status_key = ? AND enabled = 1",
+            (status_key,),
+        ).fetchone()
+        if device is None:
+            return
+        snapshot = {
+            "pc_status": str(payload.get("pc_status", "Unknown")),
+            "tailscale_status": str(payload.get("tailscale_status", "Unknown")),
+            "cpu_percent": payload.get("cpu_percent"),
+            "temperature_c": payload.get("temperature_c"),
+            "memory_percent": payload.get("memory_percent"),
+            "disk_percent": payload.get("disk_percent"),
+            "printer_name": str(payload.get("printer_name", "")),
+            "spooler_status": str(payload.get("spooler", "")),
+            "printing_count": int(payload.get("printing", 0) or 0),
+            "queued_count": int(payload.get("queued", 0) or 0),
+            "error_count": int(payload.get("error", 0) or 0),
+            "agent_reachable": 1 if bool(payload.get("agent_reachable")) else 0,
+            "details": str(payload.get("error_message", "")),
+        }
+        last = connection.execute(
+            """
+            SELECT * FROM device_status_history
+            WHERE device_id = ? ORDER BY id DESC LIMIT 1
+            """,
+            (device["id"],),
+        ).fetchone()
+        changed_fields = (
+            "pc_status", "tailscale_status", "printer_name", "spooler_status",
+            "printing_count", "queued_count", "error_count", "agent_reachable", "details",
+        )
+        status_changed = last is None or any(str(last[field]) != str(snapshot[field]) for field in changed_fields)
+        stale = True
+        if last is not None:
+            try:
+                stale = (datetime.now() - datetime.fromisoformat(last["collected_at"])).total_seconds() >= 300
+            except (TypeError, ValueError):
+                stale = True
+        if not status_changed and not stale:
+            return
+        connection.execute(
+            """
+            INSERT INTO device_status_history (
+                device_id, device_name, status_key, collected_at,
+                pc_status, tailscale_status, cpu_percent, temperature_c,
+                memory_percent, disk_percent, printer_name, spooler_status,
+                printing_count, queued_count, error_count, agent_reachable, details
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                device["id"], device["display_name"] or device_name, status_key,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                snapshot["pc_status"], snapshot["tailscale_status"], snapshot["cpu_percent"],
+                snapshot["temperature_c"], snapshot["memory_percent"], snapshot["disk_percent"],
+                snapshot["printer_name"], snapshot["spooler_status"], snapshot["printing_count"],
+                snapshot["queued_count"], snapshot["error_count"], snapshot["agent_reachable"],
+                snapshot["details"],
+            ),
+        )
+        connection.commit()
+
+
 @app.get("/api/devices/5800x/status")
 def get_5800x_status() -> dict[str, Any]:
     try:
         with urllib.request.urlopen(PC_5800X_AGENT_URL, timeout=4) as response:
             payload = json.loads(response.read().decode("utf-8"))
         payload["agent_reachable"] = True
-        return payload
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
-        return {
+        payload = {
             "computer_name": "DESKTOP-5S6BVJE",
             "pc_status": "Offline",
             "tailscale_status": "Offline",
@@ -1022,6 +1188,8 @@ def get_5800x_status() -> dict[str, Any]:
             "agent_reachable": False,
             "error_message": str(error),
         }
+    _record_device_status("5800x", "5800X", payload)
+    return payload
 
 
 @app.get("/api/devices/macmini/status")
@@ -1030,9 +1198,8 @@ def get_macmini_status() -> dict[str, Any]:
         with urllib.request.urlopen(MAC_MINI_AGENT_URL, timeout=4) as response:
             payload = json.loads(response.read().decode("utf-8"))
         payload["agent_reachable"] = True
-        return payload
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
-        return {
+        payload = {
             "computer_name": "MacMiniui-Macmini.local",
             "pc_status": "Offline",
             "tailscale_status": "Offline",
@@ -1052,6 +1219,8 @@ def get_macmini_status() -> dict[str, Any]:
             "agent_reachable": False,
             "error_message": str(error),
         }
+    _record_device_status("macmini", "Mac mini", payload)
+    return payload
 
 
 def _rows(table: str) -> list[dict[str, Any]]:
