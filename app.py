@@ -193,10 +193,25 @@ def _parse_wait_time_minutes(wait_time: Any) -> float | None:
     return None
 
 
+def _summarize_queue_targets(items: list[dict[str, Any]]) -> str:
+    names: list[str] = []
+    for item in items:
+        name = str(item.get("computer_name") or "Unknown").strip()
+        if name and name not in names:
+            names.append(name)
+    if not names:
+        return "Unknown"
+    if len(names) == 1:
+        return names[0]
+    return f"{names[0]} 외 {len(names) - 1}대"
+
+
 def _build_printer_queue_message(items: list[dict[str, Any]], longest_wait: float) -> str:
     top = items[0]
+    target_pc = _summarize_queue_targets(items)
     lines = [
         "[I-PRINT 대기열 3분 초과]",
+        f"대상 PC: {target_pc}",
         f"초과 대기 작업: {len(items)}건",
         f"최대 대기: {longest_wait:.1f}분",
         (
