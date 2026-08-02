@@ -1254,13 +1254,13 @@ def create_test_alert() -> dict[str, Any]:
             f"재알림 설정: {policy['repeat_minutes']}분\n"
             "상태: DB·화면·텔레그램 연결 시험"
         )
-        sent = _send_telegram_message(message)
         cursor = connection.execute(
             """
             INSERT INTO alert_history (
                 policy_id, location_name, device_name, printer_name,
-                alert_type, message, recipients, status, send_count
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                alert_type, message, recipients, status, send_count,
+                acknowledged_at, acknowledged_by, recovered_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP)
             """,
             (
                 policy["id"],
@@ -1270,15 +1270,17 @@ def create_test_alert() -> dict[str, Any]:
                 "테스트 장애",
                 message,
                 policy["recipients"],
-                "발생",
-                1 if sent else 0,
+                "테스트 완료",
+                0,
+                "시스템 테스트",
             ),
         )
         connection.commit()
         return {
             "ok": True,
             "history_id": cursor.lastrowid,
-            "telegram_sent": sent,
+            "telegram_sent": False,
+            "preview_only": True,
             "policy": policy["name"],
         }
 
