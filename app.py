@@ -39,7 +39,7 @@ TELEGRAM_ALERT_ENV_PATHS = (
     Path("/home/bourne/telegram-gateway/telegram_gateway.env"),
 )
 TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS = int(
-    os.getenv("IPRINT_TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS", "300")
+    os.getenv("IPRINT_TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS", "60")
 )
 PRINTER_QUEUE_ALERT_THRESHOLD_MINUTES = int(
     os.getenv("IPRINT_PRINTER_QUEUE_ALERT_MINUTES", "3")
@@ -263,6 +263,14 @@ def _check_printer_queue_and_notify(state: dict[str, bool]) -> None:
         return
 
     if previous == active:
+        if active:
+            longest = max(item["wait_minutes"] for item in over_threshold)
+            _send_telegram_message(
+                _build_printer_queue_message(
+                    sorted(over_threshold, key=lambda item: item["wait_minutes"], reverse=True),
+                    longest,
+                )
+            )
         return
 
     state["printer_queue_3m"] = active
@@ -303,6 +311,10 @@ def _check_device_and_notify(device_key: str, device_name: str, status_url: str,
         return
 
     if previous == online:
+        if not online:
+            _send_telegram_message(
+                _build_alert_message(device_name, online, payload, error_message)
+            )
         return
 
     state[device_key] = online
