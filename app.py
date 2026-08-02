@@ -3,9 +3,14 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import logging
 import math
 import os
+import re
 import sqlite3
+import threading
+import time
+import urllib.parse
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -29,9 +34,191 @@ AUTH_COOKIE_NAME = "iprint_admin_session"
 AUTH_COOKIE_MAX_AGE = 60 * 60 * 12
 PC_5800X_AGENT_URL = "http://100.117.206.9:8898/status"
 MAC_MINI_AGENT_URL = "http://100.116.128.62:8898/status"
+TELEGRAM_ALERT_ENV_PATHS = (
+    BASE_DIR / ".env",
+    Path("/home/bourne/telegram-gateway/telegram_gateway.env"),
+)
+TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS = int(
+    os.getenv("IPRINT_TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS", "300")
+)
+TELEGRAM_ALERT_STATE_PATH = BASE_DIR / "Backup" / "telegram_alert_state.json"
 
 app = FastAPI(title="i-Print Dashboard")
 app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="assets")
+_telegram_alert_thread_started = False
+
+
+def _load_env_file_if_present(path: Path) -> None:
+    if not path.exists():
+        return
+    try:
+        for raw_line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            if not key:
+                continue
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+                value = value[1:-1]
+            os.environ.setdefault(key, value)
+    except OSError as error:
+        logging.getLogger("i_print_telegram_alerts").warning(
+            "텔레그램 환경 파일을 읽지 못했습니다: %s", error
+        )
+
+
+for _telegram_env_path in TELEGRAM_ALERT_ENV_PATHS:
+    _load_env_file_if_present(_telegram_env_path)
+
+
+def _load_alert_state() -> dict[str, bool]:
+    try:
+        raw = TELEGRAM_ALERT_STATE_PATH.read_text(encoding="utf-8")
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            return {str(key): bool(value) for key, value in data.items()}
+    except FileNotFoundError:
+        return {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return {}
+
+
+def _save_alert_state(state: dict[str, bool]) -> None:
+    TELEGRAM_ALERT_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    TELEGRAM_ALERT_STATE_PATH.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+def _parse_chat_ids(raw: str) -> list[str]:
+    chat_ids: list[str] = []
+    for token in re.split(r"[\s,]+", str(raw or "").strip()):
+        if token:
+            chat_ids.append(token)
+    return chat_ids
+
+
+def _send_telegram_message(message: str) -> bool:
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_ids = _parse_chat_ids(os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS", ""))
+    if not bot_token or not chat_ids:
+        logging.getLogger("i_print_telegram_alerts").warning(
+            "텔레그램 토큰 또는 chat_id가 없어 알림을 보낼 수 없습니다."
+        )
+        return False
+
+    success = False
+    for chat_id in chat_ids:
+        payload = urllib.parse.urlencode(
+            {
+                "chat_id": chat_id,
+                "text": message,
+                "disable_web_page_preview": "true",
+            }
+        ).encode("utf-8")
+        request = urllib.request.Request(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            data=payload,
+            method="POST",
+        )
+        request.add_header("Content-Type", "application/x-www-form-urlencoded")
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                if 200 <= getattr(response, "status", 0) < 300:
+                    success = True
+        except Exception as error:
+            logging.getLogger("i_print_telegram_alerts").warning(
+                "텔레그램 발송 실패(%s): %s", chat_id, error
+            )
+    return success
+
+
+def _device_is_online(payload: dict[str, Any]) -> bool:
+    return bool(payload.get("agent_reachable")) and str(payload.get("pc_status", "")).lower() == "online"
+
+
+def _fetch_json(url: str) -> dict[str, Any]:
+    if url.endswith("/api/devices/5800x/status"):
+        return get_5800x_status()
+    if url.endswith("/api/devices/macmini/status"):
+        return get_macmini_status()
+    with urllib.request.urlopen(url, timeout=6) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def _build_alert_message(device_name: str, online: bool, payload: dict[str, Any], error: str = "") -> str:
+    state_label = "복구" if online else "오프라인"
+    pc_status = str(payload.get("pc_status") or "Unknown")
+    tailscale_status = str(payload.get("tailscale_status") or "Unknown")
+    agent_status = "연결됨" if payload.get("agent_reachable") else "연결 안 됨"
+    lines = [
+        f"[I-PRINT {state_label}] {device_name}",
+        f"PC 상태: {pc_status}",
+        f"Tailscale 상태: {tailscale_status}",
+        f"에이전트: {agent_status}",
+    ]
+    if error:
+        lines.append(f"오류: {error}")
+    return "\n".join(lines)
+
+
+def _check_device_and_notify(device_key: str, device_name: str, status_url: str, state: dict[str, bool]) -> None:
+    payload: dict[str, Any]
+    online = False
+    error_message = ""
+    try:
+        payload = _fetch_json(status_url)
+        online = _device_is_online(payload)
+    except Exception as error:
+        payload = {
+            "pc_status": "Offline",
+            "tailscale_status": "Offline",
+            "agent_reachable": False,
+        }
+        error_message = str(error)
+        online = False
+
+    previous = state.get(device_key)
+    if previous is None:
+        state[device_key] = online
+        _save_alert_state(state)
+        if not online:
+            _send_telegram_message(_build_alert_message(device_name, online, payload, error_message))
+        return
+
+    if previous == online:
+        return
+
+    state[device_key] = online
+    _save_alert_state(state)
+    _send_telegram_message(_build_alert_message(device_name, online, payload, error_message))
+
+
+def _telegram_alert_loop() -> None:
+    logger = logging.getLogger("i_print_telegram_alerts")
+    logger.info("텔레그램 상태 감시 시작: %s초 간격", TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS)
+    state = _load_alert_state()
+    while True:
+        try:
+            _check_device_and_notify("5800x", "5800X", "http://127.0.0.1:8897/api/devices/5800x/status", state)
+            _check_device_and_notify("macmini", "Mac mini", "http://127.0.0.1:8897/api/devices/macmini/status", state)
+        except Exception as error:
+            logger.exception("텔레그램 상태 감시 중 오류: %s", error)
+        time.sleep(TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS)
+
+
+def _start_telegram_alert_monitor() -> None:
+    global _telegram_alert_thread_started
+    if _telegram_alert_thread_started:
+        return
+    thread = threading.Thread(target=_telegram_alert_loop, name="i-print-telegram-alert-monitor", daemon=True)
+    thread.start()
+    _telegram_alert_thread_started = True
 
 
 def create_auth_token() -> str:
@@ -185,6 +372,7 @@ def initialize_database() -> None:
 @app.on_event("startup")
 def startup_event() -> None:
     initialize_database()
+    _start_telegram_alert_monitor()
 
 
 @app.get("/login")
