@@ -41,6 +41,9 @@ TELEGRAM_ALERT_ENV_PATHS = (
 TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS = int(
     os.getenv("IPRINT_TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS", "300")
 )
+PRINTER_QUEUE_ALERT_THRESHOLD_MINUTES = int(
+    os.getenv("IPRINT_PRINTER_QUEUE_ALERT_MINUTES", "3")
+)
 TELEGRAM_ALERT_STATE_PATH = BASE_DIR / "Backup" / "telegram_alert_state.json"
 
 app = FastAPI(title="i-Print Dashboard")
@@ -167,6 +170,99 @@ def _build_alert_message(device_name: str, online: bool, payload: dict[str, Any]
     return "\n".join(lines)
 
 
+def _parse_wait_time_minutes(wait_time: Any) -> float | None:
+    text = str(wait_time or "").strip().lower()
+    if not text:
+        return None
+
+    minute_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:min|mins|minute|minutes|m|분)", text)
+    if minute_match:
+        return float(minute_match.group(1))
+
+    hour_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:hour|hours|hr|hrs|h|시간)", text)
+    if hour_match:
+        return float(hour_match.group(1)) * 60.0
+
+    time_match = re.search(r"^(\d+):(\d{1,2})(?::(\d{1,2}))?$", text)
+    if time_match:
+        hours = int(time_match.group(1))
+        minutes = int(time_match.group(2))
+        seconds = int(time_match.group(3) or 0)
+        return hours * 60.0 + minutes + seconds / 60.0
+
+    return None
+
+
+def _build_printer_queue_message(items: list[dict[str, Any]], longest_wait: float) -> str:
+    top = items[0]
+    lines = [
+        "[I-PRINT 대기열 3분 초과]",
+        f"초과 대기 작업: {len(items)}건",
+        f"최대 대기: {longest_wait:.1f}분",
+        (
+            "최대 작업: "
+            f"{top.get('computer_name', 'Unknown')} / "
+            f"{top.get('printer_name', 'Unknown')} / "
+            f"{top.get('user_name', 'Unknown')} / "
+            f"{top.get('document_name', 'Unknown')}"
+        ),
+        f"작업 상태: {top.get('status', 'Queued')} · 대기: {top.get('wait_time', '-')}",
+    ]
+    return "\n".join(lines)
+
+
+def _check_printer_queue_and_notify(state: dict[str, bool]) -> None:
+    queue_items: list[dict[str, Any]] = []
+    with get_connection() as connection:
+        rows = connection.execute(
+            """
+            SELECT id, created_at, computer_name, printer_name, user_name,
+                   document_name, status, wait_time, details
+            FROM printer_jobs
+            WHERE LOWER(status) LIKE 'queued%'
+               OR LOWER(status) LIKE 'queue%'
+               OR LOWER(status) LIKE 'waiting%'
+            ORDER BY id DESC
+            LIMIT 50
+            """
+        ).fetchall()
+
+    for row in rows:
+        wait_minutes = _parse_wait_time_minutes(row["wait_time"])
+        if wait_minutes is None:
+            continue
+        item = dict(row)
+        item["wait_minutes"] = wait_minutes
+        queue_items.append(item)
+
+    over_threshold = [item for item in queue_items if item["wait_minutes"] >= PRINTER_QUEUE_ALERT_THRESHOLD_MINUTES]
+    active = bool(over_threshold)
+    previous = state.get("printer_queue_3m")
+
+    if previous is None:
+        state["printer_queue_3m"] = active
+        _save_alert_state(state)
+        if active:
+            longest = max(item["wait_minutes"] for item in over_threshold)
+            _send_telegram_message(_build_printer_queue_message(sorted(over_threshold, key=lambda item: item["wait_minutes"], reverse=True), longest))
+        return
+
+    if previous == active:
+        return
+
+    state["printer_queue_3m"] = active
+    _save_alert_state(state)
+
+    if active:
+        longest = max(item["wait_minutes"] for item in over_threshold)
+        _send_telegram_message(_build_printer_queue_message(sorted(over_threshold, key=lambda item: item["wait_minutes"], reverse=True), longest))
+    else:
+        _send_telegram_message(
+            "[I-PRINT 대기열 해소]\n"
+            f"{PRINTER_QUEUE_ALERT_THRESHOLD_MINUTES}분 초과 대기열이 해소되었습니다."
+        )
+
+
 def _check_device_and_notify(device_key: str, device_name: str, status_url: str, state: dict[str, bool]) -> None:
     payload: dict[str, Any]
     online = False
@@ -207,6 +303,7 @@ def _telegram_alert_loop() -> None:
         try:
             _check_device_and_notify("5800x", "5800X", "http://127.0.0.1:8897/api/devices/5800x/status", state)
             _check_device_and_notify("macmini", "Mac mini", "http://127.0.0.1:8897/api/devices/macmini/status", state)
+            _check_printer_queue_and_notify(state)
         except Exception as error:
             logger.exception("텔레그램 상태 감시 중 오류: %s", error)
         time.sleep(TELEGRAM_ALERT_CHECK_INTERVAL_SECONDS)
