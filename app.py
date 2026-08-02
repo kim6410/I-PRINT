@@ -1082,9 +1082,22 @@ def list_device_history(
             ORDER BY display_order, id
             """
         ).fetchall()
+        chart_rows: list[sqlite3.Row] = []
+        if device_id is not None:
+            chart_rows = connection.execute(
+                """
+                SELECT collected_at, cpu_percent, temperature_c
+                FROM device_status_history
+                WHERE device_id = ?
+                ORDER BY collected_at DESC, id DESC
+                LIMIT 120
+                """,
+                (device_id,),
+            ).fetchall()
     return {
         "items": [dict(row) for row in rows],
         "devices": [dict(row) for row in devices],
+        "chart_points": [dict(row) for row in reversed(chart_rows)],
         "page": current_page,
         "page_size": page_size,
         "total": total,
