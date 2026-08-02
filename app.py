@@ -234,9 +234,12 @@ def _check_printer_queue_and_notify(state: dict[str, bool]) -> None:
             SELECT id, created_at, computer_name, printer_name, user_name,
                    document_name, status, wait_time, details
             FROM printer_jobs
-            WHERE LOWER(status) LIKE 'queued%'
-               OR LOWER(status) LIKE 'queue%'
-               OR LOWER(status) LIKE 'waiting%'
+            WHERE (
+                   LOWER(status) LIKE 'queued%'
+                OR LOWER(status) LIKE 'queue%'
+                OR LOWER(status) LIKE 'waiting%'
+            )
+              AND LOWER(COALESCE(document_name, '')) NOT LIKE 'sample_document_%'
             ORDER BY id DESC
             LIMIT 50
             """
